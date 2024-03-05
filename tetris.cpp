@@ -1,6 +1,6 @@
 #include <stdlib.h> //for the random
 #include <iostream>
-#include <time.h>   // For time()
+#include <time.h>
 
 #define MAX_SIZE 15
 
@@ -10,7 +10,7 @@ class Object{
 	
 	public: 
 		Object(){
-			srand(time(NULL)); //bach kula merra ygeneri lik number jdid sinon hayb9a y3tik nfss ra9m
+
 			shape=rand() % 4;
 			color=rand() % 4;
 		}
@@ -133,6 +133,8 @@ class DoubledLinkedList{
 
 
 int main(){
+	srand(time(NULL)); //bach kula merra ygeneri lik number jdid sinon hayb9a y3tik nfss ra9m
+
 	CircularLinkedList myList;
 
 	//dkhl mn lisr    
