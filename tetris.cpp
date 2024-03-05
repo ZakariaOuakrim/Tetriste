@@ -1,5 +1,7 @@
 #include <stdlib.h> //for the random
 #include <iostream>
+#include <time.h>   // For time()
+
 #define MAX_SIZE 15
 
 class Object{
@@ -8,6 +10,7 @@ class Object{
 	
 	public: 
 		Object(){
+			srand(time(NULL)); //bach kula merra ygeneri lik number jdid sinon hayb9a y3tik nfss ra9m
 			shape=rand() % 4;
 			color=rand() % 4;
 		}
@@ -65,13 +68,13 @@ class Node{
 		
 };
 
-class SingleLinkedList{
+class CircularLinkedList{
 	private: 
 		int currentSize;
 		Node* head;
 		Node* tail;
 	public:
-		SingleLinkedList():currentSize(0),head(NULL),tail(NULL){}		
+		CircularLinkedList():currentSize(0),head(NULL),tail(NULL){}		
 		
 		int getCurrentSize(){
         	return currentSize;
@@ -87,10 +90,12 @@ class SingleLinkedList{
             if(head==NULL) {
                 head = newNode;
                 tail = newNode;
+                newNode->setNext(newNode); //bach tkun circulaire
             } else {
                 newNode->setNext(head);
                 //head->setPrev(newNode);
                 head = newNode;
+                tail->setNext(newNode); //bach tkun circulaire
             }
             currentSize++;
         }
@@ -100,25 +105,40 @@ class SingleLinkedList{
             if(head==NULL){
                 head = newNode;
                 tail = newNode;
+                newNode->setNext(newNode);//bach tkun circulaire
             } else {
                 tail->setNext(newNode);
                 //newNode->setPrev(tail);
                 tail = newNode;
+                newNode->setNext(head);//bach tkun circulaire
             }
             currentSize++;
         }
-        void displayAllNodes() {
-   			Node* currentNode = head;
-    		while (currentNode != NULL) {
-        std::cout << "Shape: " << currentNode->getObject().getShape() << ", Color: " << currentNode->getObject().getColor() << std::endl;
-        currentNode = currentNode->getNextNode();
+       void displayAllNodes() {
+    if (head == NULL) {
+        std::cout << "List is empty" ;
+        return;
     }
+    Node* temp = head; 
+    std::cout << "Circular Linked List: ";
+    int count = 0;
+    do {
+        std::cout << temp->getObject().getShape() << "," << temp->getObject().getColor() << "\t"; 
+        temp = temp->getNextNode(); 
+        count++;
+    } while (temp != head && count < currentSize); 
+    
 }
+
+
+
 
 };
 
+
+
 int main(){
-	SingleLinkedList myList;
+	CircularLinkedList myList;
 
 	//dkhl mn lisr    
     Object obj1, obj2, obj3;
