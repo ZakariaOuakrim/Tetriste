@@ -32,37 +32,31 @@ class Object{
 		}
 };
 
-class Node{
+class CircularNode{
 	private: 
 		Object object;
-		Node* prev;
-		Node* next;
+		CircularNode* next;
 		
 	public:
-		Node(){}
-		Node(Object _object,Node* _prev=NULL,Node* _next=NULL){
+		CircularNode(){}
+		CircularNode(Object _object,CircularNode* _next=NULL){
 			object=_object;
-			prev=_prev;
 			next=_next;
 		}
 		
 		Object getObject(){
 			return object;
 		}
-		Node* getPrevNode(){
-			return prev;
-		}
-		Node* getNextNode(){
+	
+		CircularNode* getNextNode(){
 			return next;
 		}
 	
 		void setObeject(Object _object){
 			object=_object;
 		}
-		void setPrev(Node* _prev){
-			prev=_prev;
-		}
-		void setNext(Node* _next){
+	
+		void setNext(CircularNode* _next){
 			next=_next;
 		}
 		
@@ -71,8 +65,8 @@ class Node{
 class CircularLinkedList{
 	private: 
 		int currentSize;
-		Node* head;
-		Node* tail;
+		CircularNode* head;
+		CircularNode* tail;
 	public:
 		CircularLinkedList():currentSize(0),head(NULL),tail(NULL){}		
 		
@@ -86,7 +80,7 @@ class CircularLinkedList{
     	}
     	
      void insertFromLeft(Object _object){
-            Node* newNode = new Node(_object);
+            CircularNode* newNode = new CircularNode(_object);
             if(head==NULL) {
                 head = newNode;
                 tail = newNode;
@@ -101,7 +95,7 @@ class CircularLinkedList{
         }
 
         void insertFromRight(Object _object){
-            Node* newNode = new Node(_object);
+            CircularNode* newNode = new CircularNode(_object);
             if(head==NULL){
                 head = newNode;
                 tail = newNode;
@@ -119,7 +113,7 @@ class CircularLinkedList{
         std::cout << "List is empty" ;
         return;
     }
-    Node* temp = head; 
+    CircularNode* temp = head; 
     std::cout << "Circular Linked List: ";
     int count = 0;
     do {
@@ -130,9 +124,10 @@ class CircularLinkedList{
     
 }
 
+};
 
-
-
+class DoubledLinkedList{
+	
 };
 
 
