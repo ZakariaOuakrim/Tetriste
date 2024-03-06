@@ -108,6 +108,24 @@ class CircularLinkedList{
             }
             currentSize++;
         }
+        
+        void deleteNodes(CircularNode *startDeleteNode){
+        	if(currentSize<3){
+        		return;
+			}
+			else{
+				CircularNode *tmp= head;
+				while(tmp->getNextNode()==startDeleteNode){ //condition prb
+					tmp = tmp->getNextNode(); 
+				}
+				//wslna
+				tmp->setNext(startDeleteNode->getNextNode()->getNextNode()->getNextNode());
+				
+					
+				
+			}	
+		}
+        
        void displayAllNodes() {
 	    if (head == NULL) {
 	        std::cout << "List is empty" ;
@@ -233,23 +251,69 @@ class Game{
 		//add to the game an object
 		void addObjectToRight(Object _object){
 			listOfObjects.insertFromRight(_object);
-			switch(_object.getColor()){
+			int color = _object.getColor();
+			int shape = _object.getShape();
+			switch(_object.getColor()){ //inserting in the color list
 				case 1:
-					
+					listOfColor1.insertFromRight(color);
 					break;
 				case 2:
-					
+					listOfColor2.insertFromRight(color);
 					break;	
 				case 3:
-					
+					listOfColor3.insertFromRight(color);
 					break;
 				case 4: 
-					
+					listOfColor4.insertFromRight(color);
 					break;
+			}
+			switch(_object.getShape()){ //inserting in the shape list 
+				case 1:
+					listOfShape1.insertFromRight(shape);
+					break;
+				case 2:
+					listOfShape2.insertFromRight(shape);
+					break;
+				case 3:
+					listOfShape3.insertFromRight(shape);
+					break;
+				case 4:
+					listOfShape4.insertFromRight(shape);
+					break;			
 			}
 		}
 		void addObjectToLeft(Object _object){
-			
+			listOfObjects.insertFromLeft(_object);	
+			int color = _object.getColor();
+			int shape = _object.getShape();
+			switch(_object.getColor()){ //inserting in the color list
+				case 1:
+					listOfColor1.insertFromLeft(color);
+					break;
+				case 2:
+					listOfColor2.insertFromLeft(color);
+					break;	
+				case 3:
+					listOfColor3.insertFromLeft(color);
+					break;
+				case 4: 
+					listOfColor4.insertFromLeft(color);
+					break;
+			};
+			switch(_object.getShape()){
+					case 1:
+					listOfShape1.insertFromLeft(shape);
+					break;
+				case 2:
+					listOfShape2.insertFromLeft(shape);
+					break;
+				case 3:
+					listOfShape3.insertFromLeft(shape);
+					break;
+				case 4:
+					listOfShape4.insertFromLeft(shape);
+					break;	
+			};
 		}
 		
 		//See the game in console 
@@ -304,16 +368,40 @@ class Game{
 			return listOfShape4;
 		}
 		
- 		
+ 		void checkStatus(){ //check if there are 3 shapes or colors  
+ 			CircularNode *tmp = listOfObjects.getHead();
+		 	CircularNode *tmp2=tmp->getNextNode();
+		 	CircularNode *tmp3=tmp2->getNextNode();
+			while(tmp->getNextNode()->getNextNode()!=listOfObjects.getHead()){	
+				//check color or shope 
+				if(tmp->getObject().getColor()==tmp2->getObject().getColor() && tmp2->getObject().getColor()==tmp3->getObject().getColor() 
+				    || tmp->getObject().getShape()==tmp2->getObject().getShape() && tmp2->getObject().getShape()==tmp3->getObject().getShape()  ){
+					//remove these elements
+					
+				}
+				
+				
+				//going to next elements
+				tmp=tmp->getNextNode();
+				tmp2=tmp->getNextNode();
+				tmp3=tmp2->getNextNode();	 		
+			 }
+		 }
 		
 };
 int main(){
 	srand(time(NULL)); //bach kula merra ygeneri lik number jdid sinon hayb9a y3tik nfss ra9m
-	Object obj1;
+	CircularNode obj1,obj2,obj3,obj4,obj5;
     
     Game game;
-    game.getListOfObjects().insertFromLeft(obj1);
-
+	game.addObjectToLeft(obj1.getObject());
+	game.addObjectToLeft(obj2.getObject());
+	game.addObjectToLeft(obj3.getObject());
+	game.addObjectToLeft(obj4.getObject());
+	game.addObjectToLeft(obj5.getObject());
+	
+	game.getListOfObjects().deleteNodes(&obj2);
+	
 	game.showGame();	
 	    
     return 0;
