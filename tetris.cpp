@@ -109,25 +109,31 @@ class CircularLinkedList{
             currentSize++;
         }
         
-        void deleteNodes(CircularNode *startDeleteNode){
-        	if(currentSize<3){
-        		return;
+		void deleteNode(CircularNode* delNode){
+			if(head==NULL || delNode==NULL){
+				return;				
 			}
-			else{
-				CircularNode *tmp= head;
-				while(tmp->getNextNode()==startDeleteNode){ //condition prb
-					tmp = tmp->getNextNode(); 
-				}
-				//wslna
-				tmp->setNext(startDeleteNode->getNextNode()->getNextNode()->getNextNode());
-				
-					
-				
-			}	
+			if(head==delNode){
+				head=delNode->getNextNode();
+			}
+			CircularNode* current = head;
+			while (current->getNextNode() != head && current->getNextNode() != delNode) {
+				current = current->getNextNode();
+			}
+			current->setNext(delNode->getNextNode());
+			
+			delete delNode;
+			currentSize--;
+
+		}
+		void deleteNodes(CircularNode* delNode){ //delete three Nodes
+			deleteNode(delNode->getNextNode()->getNextNode()); //khass nbdaw mnha so we will not lose the adress of the next node
+			deleteNode(delNode->getNextNode());
+			deleteNode(delNode);
 		}
         
        void displayAllNodes() {
-	    if (head == NULL) {
+		if (head == NULL) {
 	        std::cout << "List is empty" ;
 	        return;
 	    }
@@ -141,9 +147,11 @@ class CircularLinkedList{
 	    } while (temp != head && count < currentSize); 
 	    
 		}
+		
 		CircularNode* getHead(){
 			return head;
 		}
+		
 		CircularNode* getTail(){
 			return tail;
 		}
@@ -161,6 +169,7 @@ class DoubledCircularNode{
 			next=_next;
 			prev=_prev;	
 		}
+		
 		//getters 
 		int getData(){
 			return data;
@@ -221,6 +230,48 @@ class DoubledCircularLinkedList{ //hadi 3la 9bal shapes o colors
             }
             currentSize++;
         }
+        
+		void deleteNode(DoubledCircularNode* delNode){
+			if(head==NULL || delNode==NULL){
+				return;				
+			}
+			if(head==delNode){
+				head=delNode->getNext();
+			}
+			DoubledCircularNode* current = head;
+			while (current->getNext() != head && current->getNext() != delNode) {
+				current = current->getNext();
+			}
+			current->setNext(delNode->getNext());
+			current->setPrev(delNode->getPrev());
+			
+			delete delNode;
+			currentSize--;
+		}
+		
+		void deleteNodes(DoubledCircularNode* delNode){ //delete three Nodes
+			deleteNode(delNode->getNext()->getNext()); //khass nbdaw mnha so we will not lose the adress of the next node
+			deleteNode(delNode->getNext());
+			deleteNode(delNode);
+		}
+		
+		void displayNodes() {
+	        if (head == NULL) {
+	            std::cout << "List is empty." << std::endl;
+	            return;
+	        }
+	
+	        DoubledCircularNode* current = head;
+	        do {
+	            std::cout << current->getData() << " ";
+	            current = current->getNext();
+	        } while (current != head);
+	        std::cout << std::endl;
+    	}
+		
+		DoubledCircularNode* getHead(){
+			return head;
+		}
 		
 			
 };
@@ -281,8 +332,13 @@ class Game{
 					listOfShape4.insertFromRight(shape);
 					break;			
 			}
+			if(listOfObjects.getCurrentSize() >=3){
+				checkStatus();
+			}
 		}
+		
 		void addObjectToLeft(Object _object){
+			
 			listOfObjects.insertFromLeft(_object);	
 			int color = _object.getColor();
 			int shape = _object.getShape();
@@ -314,6 +370,83 @@ class Game{
 					listOfShape4.insertFromLeft(shape);
 					break;	
 			};
+			
+			//check 
+			if(listOfObjects.getCurrentSize() >=3){
+				checkStatus();
+			}
+		}
+		
+		//remove 3 colors from a list
+		void removeColors(int color){
+			switch(color){
+				case 1:
+					listOfColor1.deleteNodes(listOfColor1.getHead());	
+					break;	
+				case 2:
+					listOfColor2.deleteNodes(listOfColor2.getHead());	
+					break;
+				case 3:
+					listOfColor3.deleteNodes(listOfColor3.getHead());	
+					break;
+				case 4:
+					listOfColor4.deleteNodes(listOfColor4.getHead());	
+					break;	
+			}
+		}
+		
+		//remove 3 shapes from a list 
+		void removeShapes(int shape){
+			switch(shape){
+				case 1:
+					listOfShape1.deleteNodes(listOfShape1.getHead());	
+					break;	
+				case 2:
+					listOfShape2.deleteNodes(listOfShape2.getHead());	
+					break;
+				case 3:
+					listOfShape3.deleteNodes(listOfShape3.getHead());	
+					break;
+				case 4:
+					listOfShape4.deleteNodes(listOfShape4.getHead());	
+					break;	
+			}
+		}
+		
+		//remove 1 shape from a list
+		void removeShape(int shape){
+				switch(shape){
+				case 1:
+					listOfShape1.deleteNode(listOfShape1.getHead());	
+					break;	
+				case 2:
+					listOfShape2.deleteNode(listOfShape2.getHead());	
+					break;
+				case 3:
+					listOfShape3.deleteNode(listOfShape3.getHead());	
+					break;
+				case 4:
+					listOfShape4.deleteNode(listOfShape4.getHead());	
+					break;	
+			}
+		}
+		
+		//remove 1 color from a list
+		void removeColor(int color){
+			switch(color){
+				case 1:
+					listOfColor1.deleteNode(listOfColor1.getHead());	
+					break;	
+				case 2:
+					listOfColor2.deleteNode(listOfColor2.getHead());	
+					break;
+				case 3:
+					listOfColor3.deleteNode(listOfColor3.getHead());	
+					break;
+				case 4:
+					listOfColor4.deleteNode(listOfColor4.getHead());	
+					break;	
+			}
 		}
 		
 		//See the game in console 
@@ -339,6 +472,8 @@ class Game{
 				system("clear");
 			#endif
 		}
+		
+	
 		
 		CircularLinkedList& getListOfObjects(){
 			return listOfObjects;
@@ -368,42 +503,67 @@ class Game{
 			return listOfShape4;
 		}
 		
- 		void checkStatus(){ //check if there are 3 shapes or colors  
+		//check if there are 3 shapes or colors next to each other
+ 		void checkStatus(){ 
  			CircularNode *tmp = listOfObjects.getHead();
 		 	CircularNode *tmp2=tmp->getNextNode();
 		 	CircularNode *tmp3=tmp2->getNextNode();
 			while(tmp->getNextNode()->getNextNode()!=listOfObjects.getHead()){	
-				//check color or shope 
-				if(tmp->getObject().getColor()==tmp2->getObject().getColor() && tmp2->getObject().getColor()==tmp3->getObject().getColor() 
-				    || tmp->getObject().getShape()==tmp2->getObject().getShape() && tmp2->getObject().getShape()==tmp3->getObject().getShape()  ){
-					//remove these elements
-					
+				//check ila kano 3 3ndhum nfss shape 
+				if(tmp->getObject().getColor()==tmp2->getObject().getColor() && tmp2->getObject().getColor()==tmp3->getObject().getColor()){    
+					//remove 3 elements from the list of the color which is specific to the tmp color
+					removeColors(tmp->getObject().getColor());
+					//now we need to remove the shapes of the objects remaining (7it bima anana msa7na 3la 2assas lcolor ila ana shapes hayb9aw)
+					removeShape(tmp->getObject().getShape());					
+					removeShape(tmp2->getObject().getShape());
+					removeShape(tmp3->getObject().getShape());
+										
+					listOfObjects.deleteNodes(tmp); //delete from the list of objects, n9do n'optimisiw hadi fi7alat masiftna tmp ot tmp2 o tmp3 bach man7tajuch n9lbo 3lihum
+					break; //stop no need to search anymore
 				}
-				
+				// check ila kano 3 3ndhum nfss shape
+				else if(tmp->getObject().getShape()==tmp2->getObject().getShape() && tmp2->getObject().getShape()==tmp3->getObject().getShape()){   
+					removeShapes(tmp->getObject().getShape());
+					
+					removeColor(tmp->getObject().getColor());					
+					removeColor(tmp2->getObject().getColor());
+					removeColor(tmp3->getObject().getColor());
+									
+					listOfObjects.deleteNodes(tmp); //delete from the list of objects
+					break;
+				}
 				
 				//going to next elements
 				tmp=tmp->getNextNode();
 				tmp2=tmp->getNextNode();
-				tmp3=tmp2->getNextNode();	 		
+				tmp3=tmp2->getNextNode();
+	 		
 			 }
 		 }
 		
 };
+
 int main(){
 	srand(time(NULL)); //bach kula merra ygeneri lik number jdid sinon hayb9a y3tik nfss ra9m
-	CircularNode obj1,obj2,obj3,obj4,obj5;
-    
-    Game game;
-	game.addObjectToLeft(obj1.getObject());
-	game.addObjectToLeft(obj2.getObject());
-	game.addObjectToLeft(obj3.getObject());
-	game.addObjectToLeft(obj4.getObject());
-	game.addObjectToLeft(obj5.getObject());
+	Object obj1,obj2,obj3,obj4;
+
 	
-	game.getListOfObjects().deleteNodes(&obj2);
 	
-	game.showGame();	
-	    
+		
+	Game game;
+	game.addObjectToLeft(obj1);
+	game.addObjectToLeft(obj2);
+	game.addObjectToLeft(obj3);
+	game.addObjectToLeft(obj4);
+	
+	game.showGame();
+	game.checkStatus();
+	printf("\n");
+	game.showGame();
+	
+
+	
+	   
     return 0;
 }
 
