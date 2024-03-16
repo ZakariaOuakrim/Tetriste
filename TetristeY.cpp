@@ -3,6 +3,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <SFML/Graphics.hpp>
+#include <unistd.h> // For sleep function
 
 using namespace std;
 
@@ -248,10 +249,10 @@ public:
         piece p;
         int index;
         string couleurs[] = {"bleu", "rouge", "vert", "jaune"};
-        index= rand()%4;
+        index = rand() % 4;
         p.color = couleurs[index];
         string shapes[] = {"losange", "rond", "carre", "triangle"};
-        index=rand()%4;
+        index = rand() % 4;
         p.shape = shapes[index];
         return p;
     }
@@ -563,23 +564,24 @@ void colorShape(string color, sf::Shape *newCreatedShape)
     }
 }
 
-//hadi fonction li katrsamm shapes li 3ndk fla list lwindow
-void drawAllShapesThatAreInHand(ListeCirculaire *listOfObjects,sf::RenderWindow *window)
+// hadi fonction li katrsamm shapes li 3ndk fla list lwindow
+void drawAllShapesThatAreInHand(ListeCirculaire *listOfObjects, sf::RenderWindow *window)
 {
     Cellule *_tmp; // for shawing elemnts in the hand of the user
     _tmp = listOfObjects->premier;
     sf::Shape *_shape;
-    float x=0.0,y=400;
-    
+    float x = 0.0, y = 400;
+
     for (int i = 0; i < listOfObjects->taille; i++)
-    {   
+    {
         // create and draw process
-        _shape=createShape(_tmp->valeur->shape);
-        colorShape(_tmp->valeur->color,_shape);
-        x+=30;
-        
-        _shape->setPosition(x,y);
+        _shape = createShape(_tmp->valeur->shape);
+        colorShape(_tmp->valeur->color, _shape);
+        x += 100;
+
+        _shape->setPosition(x, y);
         window->draw(*_shape);
+        window->display();
 
         _tmp = _tmp->suivant;
     }
@@ -604,25 +606,29 @@ void modeGUI()
 
     while (window.isOpen())
     {
-        if (event.type == sf::Event::KeyPressed)
+
+        // check if he clicks left
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) // add left
         {
-            // check if he clicks left
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) // add left
-            {
-                cout << p->color;
-                cout << p->shape <<endl;
-                _game.inserer('g', p);
-            }
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-            { // add right
-                _game.inserer('d', p);
-            }
-            // generate a new card
-            p = new piece(_game.nextcard());
+            usleep(500000);
             // initialiser shape
+            _game.inserer('g', p);
+            window.clear(); // kanms7o shape li tal3 lina lfu9 3la lisr
+            p = new piece(_game.nextcard()); //génériw piece jdida
             shape = createShape(p->shape);
             colorShape(p->color, shape); // 3tih color
         }
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+        { // add right
+            usleep(500000);
+            // initialiser shape
+            _game.inserer('d', p);
+            window.clear(); // kanms7o shape li tal3 lina lfu9 3la lisr
+            p = new piece(_game.nextcard());
+            shape = createShape(p->shape);
+            colorShape(p->color, shape); // 3tih color
+        }
+        // generate a new card
 
         while (window.pollEvent(event))
         {
@@ -633,10 +639,9 @@ void modeGUI()
             }
         }
         // draw all shapes that are in the list
-        drawAllShapesThatAreInHand(&_game.hand,&window);
+        drawAllShapesThatAreInHand(&_game.hand, &window);
 
         // rssmo
-        window.clear();
         window.draw(*shape);
         window.display();
     }
