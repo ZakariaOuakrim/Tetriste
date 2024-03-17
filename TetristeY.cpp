@@ -2,8 +2,9 @@
 #include <string>
 #include <ctime>
 #include <cstdlib>
-#include <unistd.h> // For sleep function
 #include <SFML/Audio.hpp>
+#include <unistd.h> // For sleep function
+#include <thread>   // For sleep function
 
 #include <SFML/Graphics.hpp>
 
@@ -76,7 +77,7 @@ public:
         else
         {
             newNode->next = head;
-            head->next->prev = newNode;
+            head->prev = newNode;
             head = newNode;
         }
 
@@ -102,16 +103,13 @@ public:
         }
 
         cout << temp->data->color << " " << temp->data->shape << endl;
+        delete temp;
     }
     void supprimer(piece *p)
     {
-        if (head == tail && head->data == p)
-        {
-            delete head;
-            head = tail = nullptr;
-            taille--;
+        if (taille == 0 || head == nullptr)
             return;
-        }
+
         if (head->data == p)
         {
             Node *e = head;
@@ -122,27 +120,29 @@ public:
             taille--;
             return;
         }
-        Node *c = head->next;
-        while (c != head)
+        Node *current = head->next;
+        while (current != head)
         {
-            if (c->data != p)
-                c = c->next;
-            else
+            if (current->data == p)
             {
-                c->prev->next = c->next;
-                c->next->prev = c->prev;
-                if (c == tail)
-                    tail = c->prev;
-                delete c;
+                current->prev->next = current->next;
+                current->next->prev = current->prev;
+                if (current == tail)
+                    tail = current->prev;
                 taille--;
                 return;
             }
+            current = current->next;
         }
+        delete current;
     }
 
     void shiftleft()
     {
-
+        if (head == nullptr || head->next == nullptr)
+        {
+            return;
+        }
         Node *courant = head;
         piece temp = *head->data;
         while (courant->next != head)
@@ -461,7 +461,7 @@ void modeTerminal()
     piece *p;
     while (gamestat)
     {
-        system("cls");
+        // system("cls");
         p = new piece(g.nextcard());
         cout << "Next piece: " << p->color << " " << p->shape << "                   "
              << "Score  : " << g.score << endl;
@@ -527,304 +527,306 @@ void modeTerminal()
     }
 }
 
-sf::Shape *createShape(string shape)
+class GUI
 {
-    sf::Shape *newShape;
-    switch (shape[0])
-    {
-    case 'l':
-        newShape = new sf::RectangleShape(sf::Vector2f(80.f, 80.f));
-        newShape->rotate(45); // newShape
-        newShape->setPosition(70.f, 30.f);
-        return newShape;
-        break;
-    case 'c': // carré
-        newShape = new sf::RectangleShape(sf::Vector2f(80.f, 80.f));
-        newShape->setPosition(70.f, 30.f);
-        return newShape;
-        break;
-    case 'r': // circle
-        newShape = new sf::CircleShape(50.f);
-        newShape->setPosition(70.f, 30.f);
-        return newShape;
-        break;
-    case 't': // triangle
-        newShape = new sf::CircleShape(60, 3);
-        newShape->setPosition(70.f, 30.f);
-        return newShape;
-        break;
-    }
-    return nullptr;
-}
-void colorShape(string color, sf::Shape *newCreatedShape)
-{
-    switch (color[0])
-    {
-    case 'r':
-        newCreatedShape->setFillColor(sf::Color::Red);
-        break;
-    case 'b':
-        newCreatedShape->setFillColor(sf::Color::Blue);
-        break;
-    case 'v':
-        newCreatedShape->setFillColor(sf::Color::Green);
-        break;
-    case 'j':
-        newCreatedShape->setFillColor(sf::Color::Yellow);
-        break;
-    }
-}
-
-// hadi fonction li katrsamm shapes li 3ndk fla list lwindow
-void drawAllShapesThatAreInHand(ListeCirculaire *listOfObjects, sf::RenderWindow *window)
-{
-    Cellule *_tmp; // for shawing elemnts in the hand of the user
-    _tmp = listOfObjects->premier;
-    sf::Shape *_shape;
-    float x = 0.0, y = 400;
-
-    for (int i = 0; i < listOfObjects->taille; i++)
-    {
-        // create and draw process
-        _shape = createShape(_tmp->valeur->shape);
-        colorShape(_tmp->valeur->color, _shape);
-        x += 150;
-        if (_tmp->valeur->shape[0] == 'l') // hna zid had condition 7it diamond shape can't fit correctly behind other shapes
-            _shape->setPosition(x + 40, y);
-        else
-            _shape->setPosition(x, y);
-        window->draw(*_shape);
-        window->display();
-
-        _tmp = _tmp->suivant;
-    }
-}
-
-void startWindowGame(sf::RenderWindow &window)
-{
-    // Create the font
-    sf::Font font3d, arialFont;
-    if (!font3d.loadFromFile("ressources/fonts/gunplay.otf"))
-    {
-        std::cout << "Failed to load font!" << std::endl;
-        return;
-    }
-    if (!arialFont.loadFromFile("ressources/fonts/Arial.ttf"))
-    {
-        std::cout << "Failed to load font!" << std::endl;
-        return;
-    }
-
-    // Create the button
-    sf::RectangleShape button(sf::Vector2f(280, 100));
-    button.setFillColor(sf::Color::Green);
-    button.setPosition(840, 490);
-
-    // text Tertiste
-    sf::Text tetristeText("TETRIST", font3d, 150);
-    tetristeText.setPosition(660, 220);
-    tetristeText.setFillColor(sf::Color::Red);
-
-    // text playNow
-    sf::Text playNowText("PLAY NOW", arialFont, 50);
-    playNowText.setPosition(850, 500);
-    playNowText.setFillColor(sf::Color::White);
-
-    // Main loop
-    while (window.isOpen())
-    {
-        // Event handling
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-            {
-                window.close();
-            }
-
-            // Check if the button is clicked
-            if (event.type == sf::Event::MouseButtonPressed)
-            {
-                if (event.mouseButton.button == sf::Mouse::Left)
-                {
-                    sf::Vector2f mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
-                    if (button.getGlobalBounds().contains(mousePos))
-                    {
-                        std::cout << "Start Game button clicked!" << std::endl;
-                        return;
-                    }
-                }
-            }
-        }
-
-        // Draw the button
-        window.draw(tetristeText);
-        window.draw(button);
-        window.draw(playNowText);
-
-        // Display the window
-        window.display();
-    }
-}
-// this function load all sound and music mn ressources folder
-void soundImport(sf::Music &musicGame, sf::SoundBuffer &bufferInsert, sf::SoundBuffer &bufferDestroy)
-{
-    if (!musicGame.openFromFile("ressources/sounds/Tetris.ogg"))
-        return;
-    if (!bufferInsert.loadFromFile("ressources/sounds/insert.ogg"))
-        return;
-    if (!bufferDestroy.loadFromFile("ressources/sounds/destroyPieces.wav"))
-        return;
-}
-
-void handleShortcuts(sf::RenderWindow &window, game &_game)
-{
-
+private:
+    sf::RenderWindow window;
+    sf::Music musicGame;
+    sf::Sound insertSound, destroySound;
+    sf::SoundBuffer bufferInsert, bufferDestroy; // buffer declarito hna o machi f'sound import 7it it wont work tma it will be destroyed
     sf::Event event;
-    if (window.waitEvent(event))
+    sf::Shape *shape;
+    game _game;
+
+    piece *p;
+
+    sf::Shape *createShape(string shape)
     {
-        // Cchecki wach jana chi event
-        switch (event.type)
+        sf::Shape *newShape;
+        switch (shape[0])
         {
-        // Checki achmn event
-        case sf::Event::KeyPressed:
-            // checki ina button clicka 3lih user
-            switch (event.key.code)
+        case 'l':
+            newShape = new sf::RectangleShape(sf::Vector2f(80.f, 80.f));
+            newShape->rotate(45); // newShape
+            newShape->setPosition(70.f, 30.f);
+            return newShape;
+            break;
+        case 'c': // carré
+            newShape = new sf::RectangleShape(sf::Vector2f(80.f, 80.f));
+            newShape->setPosition(70.f, 30.f);
+            return newShape;
+            break;
+        case 'r': // circle
+            newShape = new sf::CircleShape(50.f);
+            newShape->setPosition(70.f, 30.f);
+            return newShape;
+            break;
+        case 't': // triangle
+            newShape = new sf::CircleShape(60, 3);
+            newShape->setPosition(70.f, 30.f);
+            return newShape;
+            break;
+        default:
+            return nullptr;
+        }
+    }
+    void colorShape(string color, sf::Shape *shape)
+    {
+        switch (color[0])
+        {
+        case 'r':
+            shape->setFillColor(sf::Color::Red);
+            break;
+        case 'b':
+            shape->setFillColor(sf::Color::Blue);
+            break;
+        case 'v':
+            shape->setFillColor(sf::Color::Green);
+            break;
+        case 'j':
+            shape->setFillColor(sf::Color::Yellow);
+            break;
+        }
+    }
+
+    void soundImport()
+    {
+        if (!musicGame.openFromFile("ressources/sounds/Tetris.ogg"))
+            return;
+        if (!bufferInsert.loadFromFile("ressources/sounds/insert.ogg"))
+            return;
+        if (!bufferDestroy.loadFromFile("ressources/sounds/destroyPieces.wav"))
+            return;
+    }
+
+    void handleShortcuts()
+    {
+
+        sf::Event event;
+        if (window.waitEvent(event))
+        {
+            // Cchecki wach jana chi event
+            switch (event.type)
             {
+            // Checki achmn event
+            case sf::Event::KeyPressed:
+                // checki ina button clicka 3lih user
+                switch (event.key.code)
+                {
 
-            case sf::Keyboard::D: // diamond shape
-                usleep(200000);   // 0.2 second
-                _game.decalershape('l');
+                case sf::Keyboard::D: // diamond shape
+                    _game.decalershape('l');
 
-                break;
-            case sf::Keyboard::S: // square
-                usleep(200000);   // 0.2 second
-                _game.decalershape('c');
-                break;
-            case sf::Keyboard::T: // triangle
-                usleep(200000);   // 0.2 second
-                _game.decalershape('t');
-                break;
-            case sf::Keyboard::C: // circle
-                usleep(200000);   // 0.2 second
-                _game.decalershape('c');
-                cout << "circle"<<endl;
-                break;
-            case sf::Keyboard::B: // blue
-                usleep(200000);   // 0.2 second
-                _game.decalercouleur('b');
-                break;
-            case sf::Keyboard::R: // red
-                usleep(200000);   // 0.2 second
-                _game.decalercouleur('r');
+                    break;
+                case sf::Keyboard::S: // square
+                    usleep(200000);   // 0.2 second
+                    _game.decalershape('c');
+                    break;
+                case sf::Keyboard::T: // triangle
+                    usleep(200000);   // 0.2 second
+                    _game.decalershape('t');
+                    break;
+                case sf::Keyboard::C: // circle
+                    usleep(200000);   // 0.2 second
+                    _game.decalershape('c');
+                    cout << "circle" << endl;
+                    break;
+                case sf::Keyboard::B: // blue
+                    usleep(200000);   // 0.2 second
+                    _game.decalercouleur('b');
+                    break;
+                case sf::Keyboard::R: // red
+                    usleep(200000);   // 0.2 second
+                    _game.decalercouleur('r');
 
-                break;
-            case sf::Keyboard::Y: // yellow
-                usleep(200000);   // 0.2 second
-                _game.decalercouleur('y');
+                    break;
+                case sf::Keyboard::Y: // yellow
+                    usleep(200000);   // 0.2 second
+                    _game.decalercouleur('y');
 
-                break;
-            case sf::Keyboard::G: // green
-                usleep(200000);   // 0.2 second
-                _game.decalercouleur('g');
+                    break;
+                case sf::Keyboard::G: // green
+                    usleep(200000);   // 0.2 second
+                    _game.decalercouleur('g');
 
+                    break;
+                default:
+                    break;
+                }
                 break;
             default:
                 break;
             }
-            break;
-        default:
-            break;
         }
     }
-}
 
-void modeGUI()
-{
-    bool gamestat = true;
-    srand(static_cast<unsigned>(time(0)));
-    game _game;
-    int movementChoice;
-    char choix2;
-    piece *p;
-    sf::RenderWindow window(sf::VideoMode(1920, 1080), "SFML works!"); // declarina screen
-    // declaration ta3 shapes
-    sf::Shape *shape;
-    sf::Event event;
-    sf::Music musicGame;
-    sf::Sound insertSound, destroySound;
-    sf::SoundBuffer bufferInsert, bufferDestroy; // buffer declarito hna o machi f'sound import 7it it wont work tma it will be destroyed
-    // load the music
-    soundImport(musicGame, bufferInsert, bufferDestroy);
-    insertSound.setBuffer(bufferInsert);
-    destroySound.setBuffer(bufferDestroy);
-    musicGame.setLoop(true);
-    musicGame.play();
-
-    // get the first piece
-    p = new piece(_game.nextcard());
-    // initialiser shape
-    shape = createShape(p->shape);
-    colorShape(p->color, shape); // 3tih color
-    startWindowGame(window);     // home page
-    window.clear();
-
-    musicGame.setVolume(10.f);
-    sf::Keyboard::Key key;
-    while (window.isOpen())
+    void drawAllShapesThatAreInHand()
     {
+        Cellule *_tmp; // for shawing elemnts in the hand of the user
+        _tmp = _game.hand.premier;
+        sf::Shape *_shape;
+        float x = 0.0, y = 400;
 
-        // check if he clicks left
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) // add left
+        for (int i = 0; i < _game.hand.taille; i++)
         {
-            usleep(200000); // 0.2 sec
-            // initialiser shape
-            _game.inserer('g', p);
-            if (_game.supprimer()) // check if we have 3 elemnts next to each other
-                destroySound.play();
-            insertSound.play();
-            window.clear();                  // kanms7o shape li tal3 lina lfu9 3la lisr
-            p = new piece(_game.nextcard()); // génériw piece jdida
-            shape = createShape(p->shape);
-            colorShape(p->color, shape); // 3tih color
-        }
-        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-        {                   // add right
-            usleep(200000); // 0.2 second
-            // initialiser shape
-            _game.inserer('d', p);
-            if (_game.supprimer()) // check if we have 3 elemnts next to each other
-                destroySound.play();
+            // create and draw process
+            _shape = createShape(_tmp->valeur->shape);
+            colorShape(_tmp->valeur->color, _shape);
+            x += 150;
+            if (_tmp->valeur->shape[0] == 'l') // hna zid had condition 7it diamond shape can't fit correctly behind other shapes
+                _shape->setPosition(x + 40, y);
+            else
+                _shape->setPosition(x, y);
+            window.draw(*_shape);
+            window.display();
 
-            insertSound.play();
-            window.clear(); // kanms7o shape li tal3 lina lfu9 3la lisr
-            p = new piece(_game.nextcard());
-            shape = createShape(p->shape);
-            colorShape(p->color, shape); // 3tih color
+            _tmp = _tmp->suivant;
         }
-        handleShortcuts(window, _game);
-
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-            {
-                window.close();
-                musicGame.stop();
-                return;
-            }
-        }
-        // draw all shapes that are in the list
-        drawAllShapesThatAreInHand(&_game.hand, &window);
-
-        // rssmo
-        window.draw(*shape);
-        window.display();
     }
-}
+
+    void startWindowGame()
+    {
+        // Create the font
+        sf::Font font3d, arialFont;
+        if (!font3d.loadFromFile("ressources/fonts/gunplay.otf"))
+        {
+            std::cout << "Failed to load font!" << std::endl;
+            return;
+        }
+        if (!arialFont.loadFromFile("ressources/fonts/Arial.ttf"))
+        {
+            std::cout << "Failed to load font!" << std::endl;
+            return;
+        }
+
+        // Create the button
+        sf::RectangleShape button(sf::Vector2f(280, 100));
+        button.setFillColor(sf::Color::Green);
+        button.setPosition(840, 490);
+
+        // text Tertiste
+        sf::Text tetristeText("TETRIST", font3d, 150);
+        tetristeText.setPosition(660, 220);
+        tetristeText.setFillColor(sf::Color::Red);
+
+        // text playNow
+        sf::Text playNowText("PLAY NOW", arialFont, 50);
+        playNowText.setPosition(850, 500);
+        playNowText.setFillColor(sf::Color::White);
+
+        // Main loop
+        while (window.isOpen())
+        {
+            // Event handling
+            sf::Event event;
+            while (window.pollEvent(event))
+            {
+                if (event.type == sf::Event::Closed)
+                {
+                    window.close();
+                }
+
+                // Check if the button is clicked
+                if (event.type == sf::Event::MouseButtonPressed)
+                {
+                    if (event.mouseButton.button == sf::Mouse::Left)
+                    {
+                        sf::Vector2f mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+                        if (button.getGlobalBounds().contains(mousePos))
+                        {
+                            std::cout << "Start Game button clicked!" << std::endl;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // Draw the button
+            window.draw(tetristeText);
+            window.draw(button);
+            window.draw(playNowText);
+
+            // Display the window
+            window.display();
+        }
+        window.~RenderWindow();
+    }
+
+public:
+    GUI() : window(sf::VideoMode(1920, 1080), "TETRIS")
+    {
+        soundImport();
+        insertSound.setBuffer(bufferInsert);
+        destroySound.setBuffer(bufferDestroy);
+    }
+
+    void start()
+    {
+        musicGame.setLoop(true);
+        musicGame.play();
+        p = new piece(_game.nextcard());
+        shape = createShape(p->shape);
+        colorShape(p->color, shape); // 3tih color
+        startWindowGame();           // home page
+        window.clear();
+        musicGame.setVolume(10.f);
+        while (window.isOpen())
+        {
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) // add left
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(16)); // Adjust frame rate as needed
+
+                // initialiser shape
+                _game.inserer('g', p);
+                insertSound.play();
+
+                if (_game.supprimer()) // check if we have 3 elemnts next to each other
+                    destroySound.play();
+
+                window.clear();                  // kanms7o shape li tal3 lina lfu9 3la lisr
+                p = new piece(_game.nextcard()); // génériw piece jdida
+                shape = createShape(p->shape);
+                colorShape(p->color, shape); // 3tih color
+            }
+            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+            {                   // add right
+                usleep(200000); // 0.2 second
+                // initialiser shape
+                _game.inserer('d', p);
+                insertSound.play();
+
+                if (_game.supprimer()) // check if we have 3 elemnts next to each other
+                    destroySound.play();
+
+                window.clear(); // kanms7o shape li tal3 lina lfu9 3la lisr
+                p = new piece(_game.nextcard());
+                shape = createShape(p->shape);
+                colorShape(p->color, shape); // 3tih color
+            }
+            handleShortcuts();
+
+            while (window.pollEvent(event))
+            {
+                if (event.type == sf::Event::Closed)
+                {
+                    window.close();
+                    musicGame.stop();
+                }
+            }
+            drawAllShapesThatAreInHand();
+
+            window.draw(*shape);
+            window.display();
+        }
+        delete p;
+    }
+};
 
 int main()
 {
     // modeTerminal();
-    modeGUI();
+    GUI gui;
+    gui.start();
+
     return 0;
 }

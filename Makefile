@@ -1,16 +1,24 @@
-SFMLINCLUDE = -I"C:\Users\Dell\Desktop\Project\SFML-2.6.1\include"
-SFMLLIB= -L"C:\Users\Dell\Desktop\Project\SFML-2.6.1\lib" -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+SFML_INCLUDE = -g -I"C:\Users\Dell\Desktop\Project\SFML-2.6.1\include"
+SFML_LIB = -L"C:\Users\Dell\Desktop\Project\SFML-2.6.1\lib" -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+CXX = g++
+CXXFLAGS = -std=c++11 -Wall -Wextra -O2
+TARGET = sfml-app
 
-all:sfml-app
-	./sfml-app
+SRC = TetristeY.cpp
+OBJ = $(SRC:.cpp=.o)
 
-startGame:
-	./sfml-app
-TetristeY.o: TetristeY.cpp
-	g++ -c TetristeY.cpp $(SFMLINCLUDE)
+.PHONY: all clean
 
-sfml-app: TetristeY.o
-	g++ TetristeY.o -o sfml-app $(SFMLLIB)
-	
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(CXX) $^ -o $@ $(SFML_LIB)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(SFML_INCLUDE)
+
+startGame: $(TARGET)
+	./$(TARGET)
+
 clean:
-	rm TetristeY.o sfml-app
+	rm -f $(OBJ) $(TARGET)
