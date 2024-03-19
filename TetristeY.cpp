@@ -249,7 +249,7 @@ public:
     {
         score = 0;
     }
-    piece nextcard()
+    static piece nextcard()
     {
         piece p;
         string couleurs[] = {"bleu", "rouge", "vert", "jaune"};
@@ -528,17 +528,16 @@ void modeTerminal()
     delete p;
 }
 
-
 class GUI
 {
 private:
     sf::RenderWindow window;
     sf::Music musicGame;
-    sf::Sound insertSound, destroySound;
-    sf::SoundBuffer bufferInsert, bufferDestroy; // buffer declarito hna o machi f'sound import 7it it wont work tma it will be destroyed
+    sf::Sound insertSound, destroySound, swapSound;
+    sf::SoundBuffer bufferInsert, bufferDestroy, bufferSwap; // buffer declarito hna o machi f'sound import 7it it wont work tma it will be destroyed
     sf::Event event;
     sf::Shape *shape;
-    
+
     game _game;
 
     piece *p;
@@ -600,9 +599,11 @@ private:
             return;
         if (!bufferDestroy.loadFromFile("ressources/sounds/destroyPieces.wav"))
             return;
+        if (!bufferSwap.loadFromFile("ressources/sounds/swapPieces.wav"))
+            return;
     }
 
-    int handleShortcuts() //had function katreturni 0 ila decalina b'shape o katrad 1 ila blcolor 
+    int handleShortcuts() // had function katreturni 0 ila decalina b'shape o katrad 1 ila blcolor
     {
         sf::Event event;
         if (window.waitEvent(event))
@@ -618,7 +619,7 @@ private:
                 case sf::Keyboard::D: // diamond shape
                     _game.decalershape('l');
                     return 0;
-                    
+
                 case sf::Keyboard::S: // square
                     usleep(200000);   // 0.2 second
                     _game.decalershape('c');
@@ -632,27 +633,27 @@ private:
                     _game.decalershape('r');
                     return 0;
 
-                //colors
+                // colors
                 case sf::Keyboard::B: // blue
                     usleep(200000);   // 0.2 second
                     _game.decalercouleur('b');
                     return 1;
-                    
+
                 case sf::Keyboard::R: // red
                     usleep(200000);   // 0.2 second
                     _game.decalercouleur('r');
                     return 1;
-                    
+
                 case sf::Keyboard::Y: // yellow
                     usleep(200000);   // 0.2 second
                     _game.decalercouleur('j');
                     return 1;
-                    
+
                 case sf::Keyboard::G: // green
                     usleep(200000);   // 0.2 second
                     _game.decalercouleur('v');
                     return 1;
-                    
+
                 default:
                     break;
                 }
@@ -661,14 +662,14 @@ private:
                 break;
             }
         }
-        return 0;
+        return -1;
     }
 
     void drawAllShapesThatAreInHand()
     {
         Cellule *_tmp; // for shawing elemnts in the hand of the user
         _tmp = _game.hand.premier;
-        sf::Shape *_shape;
+        sf::Shape *_shape = nullptr;
         float x = 0.0, y = 400;
 
         for (int i = 0; i < _game.hand.taille; i++)
@@ -759,16 +760,19 @@ private:
     }
 
 public:
-    GUI() : window(sf::VideoMode(1920, 1080), "TETRIS")
+    GUI() : window(sf::VideoMode(1920, 1080), "TETRISE")
     {
         srand(static_cast<unsigned>(time(0)));
         soundImport();
         insertSound.setBuffer(bufferInsert);
         destroySound.setBuffer(bufferDestroy);
+        swapSound.setBuffer(bufferSwap);
     }
 
     void start()
     {
+        int didWeChangeColorOrShape;
+
         musicGame.setLoop(true);
         musicGame.play();
         p = new piece(_game.nextcard());
@@ -777,8 +781,10 @@ public:
         startWindowGame();           // home page
         window.clear();
         musicGame.setVolume(10.f);
+
         while (window.isOpen())
         {
+
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) // add left
             {
                 usleep(200000); // 0.2 second
@@ -792,6 +798,7 @@ public:
 
                 window.clear();                  // kanms7o shape li tal3 lina lfu9 3la lisr
                 p = new piece(_game.nextcard()); // génériw piece jdida
+
                 shape = createShape(p->shape);
                 colorShape(p->color, shape); // 3tih color
             }
@@ -804,16 +811,23 @@ public:
 
                 if (_game.supprimer()) // check if we have 3 elemnts next to each other
                     destroySound.play();
+                p = new piece(_game.nextcard()); // génériw piece jdida
 
                 window.clear(); // kanms7o shape li tal3 lina lfu9 3la lisr
-                p = new piece(_game.nextcard());
+
                 shape = createShape(p->shape);
                 colorShape(p->color, shape); // 3tih color
             }
-            if(handleShortcuts()==1){
+            didWeChangeColorOrShape = handleShortcuts();
+            if (didWeChangeColorOrShape == 1)
+            {
                 window.clear();
+                swapSound.play();
             }
-            
+            else if (didWeChangeColorOrShape == 0)
+            {
+                swapSound.play();
+            }
 
             while (window.pollEvent(event))
             {
@@ -840,7 +854,7 @@ public:
 
 int main()
 {
-    //modeTerminal();
+    // modeTerminal();
     GUI gui;
     gui.start();
 
