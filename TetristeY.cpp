@@ -249,7 +249,7 @@ public:
     {
         score = 0;
     }
-    static piece nextcard()
+    piece nextcard()
     {
         piece p;
         string couleurs[] = {"bleu", "rouge", "vert", "jaune"};
@@ -537,7 +537,7 @@ private:
     sf::SoundBuffer bufferInsert, bufferDestroy, bufferSwap; // buffer declarito hna o machi f'sound import 7it it wont work tma it will be destroyed
     sf::Event event;
     sf::Shape *shape;
-
+    piece tab[5];
     game _game;
 
     piece *p;
@@ -759,6 +759,15 @@ private:
         window.~Window();
     }
 
+    void initTab()
+    {
+        tab[0] = _game.nextcard();
+        tab[1] = _game.nextcard();
+        tab[2] = _game.nextcard();
+        tab[3] = _game.nextcard();
+        tab[4] = _game.nextcard();
+    }
+
 public:
     GUI() : window(sf::VideoMode(1920, 1080), "TETRISE")
     {
@@ -772,6 +781,7 @@ public:
     void start()
     {
         int didWeChangeColorOrShape;
+        initTab();
 
         musicGame.setLoop(true);
         musicGame.play();
@@ -826,6 +836,7 @@ public:
             }
             else if (didWeChangeColorOrShape == 0)
             {
+                window.clear();
                 swapSound.play();
             }
 
