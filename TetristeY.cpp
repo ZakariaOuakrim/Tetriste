@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <SFML/Audio.hpp>
 #include <unistd.h> // For sleep function
-#include <thread>   // For sleep function
 
 #include <SFML/Graphics.hpp>
 
@@ -77,7 +76,7 @@ public:
         else
         {
             newNode->next = head;
-            head->prev = newNode;
+            head->next->prev = newNode;
             head = newNode;
         }
 
@@ -103,13 +102,16 @@ public:
         }
 
         cout << temp->data->color << " " << temp->data->shape << endl;
-        delete temp;
     }
     void supprimer(piece *p)
     {
-        if (taille == 0 || head == nullptr)
+        if (head == tail && head->data == p)
+        {
+            delete head;
+            head = tail = nullptr;
+            taille--;
             return;
-
+        }
         if (head->data == p)
         {
             Node *e = head;
@@ -120,29 +122,31 @@ public:
             taille--;
             return;
         }
-        Node *current = head->next;
-        while (current != head)
+        Node *c = head->next;
+        while (c != head)
         {
-            if (current->data == p)
+            if (c->data != p)
+                c = c->next;
+            else
             {
-                current->prev->next = current->next;
-                current->next->prev = current->prev;
-                if (current == tail)
-                    tail = current->prev;
+                c->prev->next = c->next;
+                c->next->prev = c->prev;
+                if (c == tail)
+                    tail = c->prev;
+                delete c;
                 taille--;
                 return;
             }
-            current = current->next;
         }
-        delete current;
     }
 
     void shiftleft()
     {
-        if (head == nullptr || head->next == nullptr)
+        if (taille < 2)
         {
             return;
         }
+
         Node *courant = head;
         piece temp = *head->data;
         while (courant->next != head)
@@ -239,7 +243,6 @@ class game
 {
 public:
     CircularDoublyLinkedList bleu, jaune, rouge, vert, carre, losange, rond, triangle;
-
     ListeCirculaire hand;
     int score;
     game()
@@ -249,13 +252,10 @@ public:
     piece nextcard()
     {
         piece p;
-        int index;
         string couleurs[] = {"bleu", "rouge", "vert", "jaune"};
-        index = rand() % 4;
-        p.color = couleurs[index];
+        p.color = couleurs[std::rand() % 4];
         string shapes[] = {"losange", "rond", "carre", "triangle"};
-        index = rand() % 4;
-        p.shape = shapes[index];
+        p.shape = shapes[std::rand() % 4];
         return p;
     }
 
@@ -434,13 +434,14 @@ public:
                     delete t3;
                     hand.taille -= 3;
                     score += 5;
-                    return 1; // sucess
+                    return 1;
                 }
                 pred = t1;
                 t1 = t1->suivant;
                 t2 = t1->suivant;
                 t3 = t2->suivant;
             }
+            return 0;
         }
         return 0;
     }
@@ -449,7 +450,6 @@ public:
         return !(hand.taille == 15);
     }
 };
-
 void modeTerminal()
 {
     bool gamestat = true;
@@ -525,7 +525,9 @@ void modeTerminal()
         g.supprimer();
         gamestat = g.gameover();
     }
+    delete p;
 }
+
 
 class GUI
 {
@@ -536,6 +538,7 @@ private:
     sf::SoundBuffer bufferInsert, bufferDestroy; // buffer declarito hna o machi f'sound import 7it it wont work tma it will be destroyed
     sf::Event event;
     sf::Shape *shape;
+    
     game _game;
 
     piece *p;
@@ -599,9 +602,8 @@ private:
             return;
     }
 
-    void handleShortcuts()
+    int handleShortcuts() //had function katreturni 0 ila decalina b'shape o katrad 1 ila blcolor 
     {
-
         sf::Event event;
         if (window.waitEvent(event))
         {
@@ -613,43 +615,44 @@ private:
                 // checki ina button clicka 3lih user
                 switch (event.key.code)
                 {
-
                 case sf::Keyboard::D: // diamond shape
                     _game.decalershape('l');
-
-                    break;
+                    return 0;
+                    
                 case sf::Keyboard::S: // square
                     usleep(200000);   // 0.2 second
                     _game.decalershape('c');
-                    break;
+                    return 0;
                 case sf::Keyboard::T: // triangle
                     usleep(200000);   // 0.2 second
                     _game.decalershape('t');
-                    break;
+                    return 0;
                 case sf::Keyboard::C: // circle
                     usleep(200000);   // 0.2 second
-                    _game.decalershape('c');
-                    cout << "circle" << endl;
-                    break;
+                    _game.decalershape('r');
+                    return 0;
+
+                //colors
                 case sf::Keyboard::B: // blue
                     usleep(200000);   // 0.2 second
                     _game.decalercouleur('b');
-                    break;
+                    return 1;
+                    
                 case sf::Keyboard::R: // red
                     usleep(200000);   // 0.2 second
                     _game.decalercouleur('r');
-
-                    break;
+                    return 1;
+                    
                 case sf::Keyboard::Y: // yellow
                     usleep(200000);   // 0.2 second
-                    _game.decalercouleur('y');
-
-                    break;
+                    _game.decalercouleur('j');
+                    return 1;
+                    
                 case sf::Keyboard::G: // green
                     usleep(200000);   // 0.2 second
-                    _game.decalercouleur('g');
-
-                    break;
+                    _game.decalercouleur('v');
+                    return 1;
+                    
                 default:
                     break;
                 }
@@ -658,6 +661,7 @@ private:
                 break;
             }
         }
+        return 0;
     }
 
     void drawAllShapesThatAreInHand()
@@ -749,12 +753,15 @@ private:
             // Display the window
             window.display();
         }
+        window.~RenderTarget();
         window.~RenderWindow();
+        window.~Window();
     }
 
 public:
     GUI() : window(sf::VideoMode(1920, 1080), "TETRIS")
     {
+        srand(static_cast<unsigned>(time(0)));
         soundImport();
         insertSound.setBuffer(bufferInsert);
         destroySound.setBuffer(bufferDestroy);
@@ -774,7 +781,7 @@ public:
         {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) // add left
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(16)); // Adjust frame rate as needed
+                usleep(200000); // 0.2 second
 
                 // initialiser shape
                 _game.inserer('g', p);
@@ -803,7 +810,10 @@ public:
                 shape = createShape(p->shape);
                 colorShape(p->color, shape); // 3tih color
             }
-            handleShortcuts();
+            if(handleShortcuts()==1){
+                window.clear();
+            }
+            
 
             while (window.pollEvent(event))
             {
@@ -811,6 +821,9 @@ public:
                 {
                     window.close();
                     musicGame.stop();
+                    window.~RenderTarget();
+                    window.~RenderWindow();
+                    window.~Window();
                 }
             }
             drawAllShapesThatAreInHand();
@@ -819,12 +832,15 @@ public:
             window.display();
         }
         delete p;
+        window.~RenderTarget();
+        window.~RenderWindow();
+        window.~Window();
     }
 };
 
 int main()
 {
-    // modeTerminal();
+    //modeTerminal();
     GUI gui;
     gui.start();
 
