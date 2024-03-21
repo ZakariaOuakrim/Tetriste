@@ -450,6 +450,7 @@ public:
         return !(hand.taille == 15);
     }
 };
+
 void modeTerminal()
 {
     bool gamestat = true;
@@ -537,8 +538,11 @@ private:
     sf::SoundBuffer bufferInsert, bufferDestroy, bufferSwap; // buffer declarito hna o machi f'sound import 7it it wont work tma it will be destroyed
     sf::Event event;
     sf::Shape *shape;
-    piece tab[5];
+    sf::Font scoreFont;
+    sf::Text scoreText;
+    piece *tab[3];
     game _game;
+    int score;
 
     piece *p;
 
@@ -761,11 +765,23 @@ private:
 
     void initTab()
     {
-        tab[0] = _game.nextcard();
-        tab[1] = _game.nextcard();
-        tab[2] = _game.nextcard();
-        tab[3] = _game.nextcard();
-        tab[4] = _game.nextcard();
+        tab[0] = new piece(_game.nextcard());
+        tab[1] = new piece(_game.nextcard());
+        tab[2] = new piece(_game.nextcard());
+    }
+
+    void drawWaitingElements()
+    {
+        sf::Shape *_shape;
+        int x = 300;
+        for (int i = 0; i < 3; i++)
+        {
+            _shape = createShape(tab[i]->shape);
+            colorShape(tab[i]->color, _shape);
+            x += 150;
+            _shape->setPosition(x, 30);
+            window.draw(*_shape);
+        }
     }
 
 public:
@@ -776,13 +792,22 @@ public:
         insertSound.setBuffer(bufferInsert);
         destroySound.setBuffer(bufferDestroy);
         swapSound.setBuffer(bufferSwap);
+
+        if (!scoreFont.loadFromFile("ressources/fonts/Arial.ttf"))
+        {
+            std::cout << "Failed to load font!" << std::endl;
+            return;
+        }
+        scoreText = sf::Text("Score: 0", scoreFont, 60);
+        scoreText.setPosition(1500, 50);
+        scoreText.setFillColor(sf::Color::White);
     }
 
     void start()
     {
         int didWeChangeColorOrShape;
-        initTab();
-
+        initTab(); // init the tab
+        score = 0;
         musicGame.setLoop(true);
         musicGame.play();
         p = new piece(_game.nextcard());
@@ -791,23 +816,33 @@ public:
         startWindowGame();           // home page
         window.clear();
         musicGame.setVolume(10.f);
-
+        int i = 0; // keep track on the items of the tab
         while (window.isOpen())
         {
-
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) // add left
             {
                 usleep(200000); // 0.2 second
-
                 // initialiser shape
                 _game.inserer('g', p);
                 insertSound.play();
 
-                if (_game.supprimer()) // check if we have 3 elemnts next to each other
+                if (_game.supprimer())
+                { // check if we have 3 elemnts next to each other
                     destroySound.play();
+                    score += 10;
+                    scoreText.setString("Score: " + to_string(score));
+                }
 
-                window.clear();                  // kanms7o shape li tal3 lina lfu9 3la lisr
-                p = new piece(_game.nextcard()); // génériw piece jdida
+                window.clear(); // kanms7o shape li tal3 lina lfu9 3la lisr
+                // p = new piece(_game.nextcard()); // génériw piece jdida
+                p = tab[i];
+                cout << "i " << i << endl;
+                i++;
+                if (i == 3)
+                {
+                    i = 0;
+                    initTab();
+                }
 
                 shape = createShape(p->shape);
                 colorShape(p->color, shape); // 3tih color
@@ -819,9 +854,21 @@ public:
                 _game.inserer('d', p);
                 insertSound.play();
 
-                if (_game.supprimer()) // check if we have 3 elemnts next to each other
+                if (_game.supprimer())
+                { // check if we have 3 elemnts next to each other
                     destroySound.play();
-                p = new piece(_game.nextcard()); // génériw piece jdida
+                    score += 10;
+                    scoreText.setString("Score: " + to_string(score));
+                }
+                // p = new piece(_game.nextcard()); // génériw piece jdida
+                p = tab[i];
+                cout << "i " << i << endl;
+                i++;
+                if (i == 3)
+                {
+                    i = 0;
+                    initTab();
+                }
 
                 window.clear(); // kanms7o shape li tal3 lina lfu9 3la lisr
 
@@ -831,11 +878,22 @@ public:
             didWeChangeColorOrShape = handleShortcuts();
             if (didWeChangeColorOrShape == 1)
             {
+                if (_game.supprimer())
+                { // checki ila 3ndna 3 7da b3dyathum
+                    destroySound.play();
+                    score += 10;
+                    scoreText.setString("Score: " + to_string(score));
+                }
                 window.clear();
                 swapSound.play();
             }
             else if (didWeChangeColorOrShape == 0)
             {
+                if (_game.supprimer())
+                { // checki ila 3ndna 3 7da b3dyathum
+                    destroySound.play();
+                    score += 10;
+                }
                 window.clear();
                 swapSound.play();
             }
@@ -852,8 +910,10 @@ public:
                 }
             }
             drawAllShapesThatAreInHand();
+            //drawWaitingElements();
 
             window.draw(*shape);
+            window.draw(scoreText);
             window.display();
         }
         delete p;
