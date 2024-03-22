@@ -4,31 +4,11 @@
 #include <cstdlib>
 #include <SFML/Audio.hpp>
 #include <unistd.h> // For sleep function
-
 #include <SFML/Graphics.hpp>
+#include "dataStructure/DoubleLinkedList/h_files/node.h"
+#include "dataStructure/Piece/piece.h"
 
 using namespace std;
-
-typedef struct
-{
-    string color;
-    string shape;
-} piece;
-
-class Node
-{
-public:
-    piece *data;
-    Node *prev;
-    Node *next;
-
-    Node(piece *data)
-    {
-        this->data = data;
-        prev = nullptr;
-        next = nullptr;
-    }
-};
 
 class CircularDoublyLinkedList
 {
@@ -63,6 +43,11 @@ public:
         tail->next = head;
         head->prev = tail;
         taille++;
+    }
+    void init(){
+        head=nullptr;
+        tail=nullptr;
+        taille=0;
     }
 
     void addhead(piece *data)
@@ -181,6 +166,12 @@ public:
 
 public:
     ListeCirculaire()
+    {
+        premier = nullptr;
+        dernier = nullptr;
+        taille = 0;
+    }
+    void init()
     {
         premier = nullptr;
         dernier = nullptr;
@@ -534,12 +525,12 @@ class GUI
 private:
     sf::RenderWindow window;
     sf::Music musicGame;
-    sf::Sound insertSound, destroySound, swapSound;
-    sf::SoundBuffer bufferInsert, bufferDestroy, bufferSwap; // buffer declarito hna o machi f'sound import 7it it wont work tma it will be destroyed
+    sf::Sound insertSound, destroySound, swapSound, lostSound;
+    sf::SoundBuffer bufferInsert, bufferDestroy, bufferSwap, bufferLost; // buffer declarito hna o machi f'sound import 7it it wont work tma it will be destroyed
     sf::Event event;
     sf::Shape *shape;
     sf::Font scoreFont;
-    sf::Text scoreText;
+    sf::Text scoreText, nextText, lostText;
     piece *tab[3];
     game _game;
     int score;
@@ -554,22 +545,22 @@ private:
         case 'l':
             newShape = new sf::RectangleShape(sf::Vector2f(80.f, 80.f));
             newShape->rotate(45); // newShape
-            newShape->setPosition(70.f, 30.f);
+            newShape->setPosition(380.f, 30.f);
             return newShape;
             break;
         case 'c': // carré
             newShape = new sf::RectangleShape(sf::Vector2f(80.f, 80.f));
-            newShape->setPosition(70.f, 30.f);
+            newShape->setPosition(320.f, 30.f);
             return newShape;
             break;
         case 'r': // circle
             newShape = new sf::CircleShape(50.f);
-            newShape->setPosition(70.f, 30.f);
+            newShape->setPosition(320.f, 30.f);
             return newShape;
             break;
         case 't': // triangle
             newShape = new sf::CircleShape(60, 3);
-            newShape->setPosition(70.f, 30.f);
+            newShape->setPosition(320.f, 30.f);
             return newShape;
             break;
         default:
@@ -604,6 +595,8 @@ private:
         if (!bufferDestroy.loadFromFile("ressources/sounds/destroyPieces.wav"))
             return;
         if (!bufferSwap.loadFromFile("ressources/sounds/swapPieces.wav"))
+            return;
+        if (!bufferLost.loadFromFile("ressources/sounds/losing2.wav"))
             return;
     }
 
@@ -693,10 +686,74 @@ private:
         }
     }
 
+    void initTab()
+    {
+        tab[0] = new piece(_game.nextcard());
+        tab[1] = new piece(_game.nextcard());
+        tab[2] = new piece(_game.nextcard());
+    }
+
+    void drawWaitingElements()
+    {
+        sf::Shape *_shape;
+        int x = 300;
+        for (int i = 0; i < 3; i++)
+        {
+            _shape = createShape(tab[i]->shape);
+            colorShape(tab[i]->color, _shape);
+            x += 150;
+            _shape->setPosition(x, 30);
+            window.draw(*_shape);
+        }
+    }
+
+    void initAllElementsOfTheGame()
+    { // had funtion kat initialiser ga3 les elements l'null bach t9der t3awd tl3b
+        _game.hand.init();
+        _game.bleu.init();
+        _game.vert.init();
+        _game.rouge.init();
+        _game.jaune.init();
+        _game.triangle.init();
+        _game.carre.init();
+        _game.rond.init();
+        _game.losange.init();
+    }
+
+public:
+    GUI() : window(sf::VideoMode(1920, 1080), "TETRISE")
+    {
+        srand(static_cast<unsigned>(time(0)));
+        soundImport();
+        insertSound.setBuffer(bufferInsert);
+        destroySound.setBuffer(bufferDestroy);
+        swapSound.setBuffer(bufferSwap);
+        lostSound.setBuffer(bufferLost);
+
+        if (!scoreFont.loadFromFile("ressources/fonts/Arial.ttf"))
+        {
+            std::cout << "Failed to load font!" << std::endl;
+            return;
+        }
+        scoreText = sf::Text("Score: 0", scoreFont, 60);
+        scoreText.setPosition(1500, 50);
+        scoreText.setFillColor(sf::Color::White);
+
+        nextText = sf::Text("Next Element ", scoreFont, 50);
+        nextText.setPosition(0, 40);
+        nextText.setFillColor(sf::Color::White);
+
+        lostText = sf::Text("You Lost ", scoreFont, 100);
+        lostText.setPosition(800, 400);
+        lostText.setFillColor(sf::Color::Red);
+    }
+
     void startWindowGame()
     {
         // Create the font
         sf::Font font3d, arialFont;
+        musicGame.setLoop(true);
+        musicGame.play();
         if (!font3d.loadFromFile("ressources/fonts/gunplay.otf"))
         {
             std::cout << "Failed to load font!" << std::endl;
@@ -744,7 +801,7 @@ private:
                         if (button.getGlobalBounds().contains(mousePos))
                         {
                             std::cout << "Start Game button clicked!" << std::endl;
-                            return;
+                            start();
                         }
                     }
                 }
@@ -763,60 +820,22 @@ private:
         window.~Window();
     }
 
-    void initTab()
-    {
-        tab[0] = new piece(_game.nextcard());
-        tab[1] = new piece(_game.nextcard());
-        tab[2] = new piece(_game.nextcard());
-    }
-
-    void drawWaitingElements()
-    {
-        sf::Shape *_shape;
-        int x = 300;
-        for (int i = 0; i < 3; i++)
-        {
-            _shape = createShape(tab[i]->shape);
-            colorShape(tab[i]->color, _shape);
-            x += 150;
-            _shape->setPosition(x, 30);
-            window.draw(*_shape);
-        }
-    }
-
-public:
-    GUI() : window(sf::VideoMode(1920, 1080), "TETRISE")
-    {
-        srand(static_cast<unsigned>(time(0)));
-        soundImport();
-        insertSound.setBuffer(bufferInsert);
-        destroySound.setBuffer(bufferDestroy);
-        swapSound.setBuffer(bufferSwap);
-
-        if (!scoreFont.loadFromFile("ressources/fonts/Arial.ttf"))
-        {
-            std::cout << "Failed to load font!" << std::endl;
-            return;
-        }
-        scoreText = sf::Text("Score: 0", scoreFont, 60);
-        scoreText.setPosition(1500, 50);
-        scoreText.setFillColor(sf::Color::White);
-    }
-
     void start()
     {
+
         int didWeChangeColorOrShape;
         initTab(); // init the tab
         score = 0;
-        musicGame.setLoop(true);
-        musicGame.play();
+        // set all elements to nullptr so if we try to play again we wont have a prb
+        initAllElementsOfTheGame();
+        scoreText.setString("Score: 0"); // hna we need to always set the text so if the game is played again it can be updated
+
         p = new piece(_game.nextcard());
         shape = createShape(p->shape);
         colorShape(p->color, shape); // 3tih color
-        startWindowGame();           // home page
+        // startWindowGame();           // home page
         window.clear();
         musicGame.setVolume(10.f);
-        int i = 0; // keep track on the items of the tab
         while (window.isOpen())
         {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) // add left
@@ -833,16 +852,16 @@ public:
                     scoreText.setString("Score: " + to_string(score));
                 }
 
-                window.clear(); // kanms7o shape li tal3 lina lfu9 3la lisr
-                // p = new piece(_game.nextcard()); // génériw piece jdida
-                p = tab[i];
-                cout << "i " << i << endl;
-                i++;
-                if (i == 3)
-                {
-                    i = 0;
-                    initTab();
-                }
+                window.clear();                  // kanms7o shape li tal3 lina lfu9 3la lisr
+                p = new piece(_game.nextcard()); // génériw piece jdida
+                // p = tab[i];
+                // cout << "i " << i << endl;
+                // i++;
+                // if (i == 3)
+                // {
+                //     i = 0;
+                //     initTab();
+                // }
 
                 shape = createShape(p->shape);
                 colorShape(p->color, shape); // 3tih color
@@ -860,15 +879,15 @@ public:
                     score += 10;
                     scoreText.setString("Score: " + to_string(score));
                 }
-                // p = new piece(_game.nextcard()); // génériw piece jdida
-                p = tab[i];
-                cout << "i " << i << endl;
-                i++;
-                if (i == 3)
-                {
-                    i = 0;
-                    initTab();
-                }
+                p = new piece(_game.nextcard()); // génériw piece jdida
+                // p = tab[i];
+                // cout << "i " << i << endl;
+                // i++;
+                // if (i == 3)
+                // {
+                //     i = 0;
+                //     initTab();
+                // }
 
                 window.clear(); // kanms7o shape li tal3 lina lfu9 3la lisr
 
@@ -898,10 +917,11 @@ public:
                 swapSound.play();
             }
 
-            while (window.pollEvent(event))
+            while (window.pollEvent(event)) // close event
             {
                 if (event.type == sf::Event::Closed)
                 {
+                    cout << "here" << endl;
                     window.close();
                     musicGame.stop();
                     window.~RenderTarget();
@@ -910,12 +930,58 @@ public:
                 }
             }
             drawAllShapesThatAreInHand();
-            //drawWaitingElements();
-
+            // drawWaitingElements();
+            if (_game.hand.taille == 13)
+            {
+                lostSound.play();
+                break;
+            }
+            // testing
             window.draw(*shape);
             window.draw(scoreText);
+            window.draw(nextText);
             window.display();
+        } // end loop of the game
+
+        musicGame.pause();
+        sf::Font arialFont;
+        if (!arialFont.loadFromFile("ressources/fonts/Arial.ttf"))
+        {
+            std::cout << "Failed to load font!" << std::endl;
+            return;
         }
+        sf::RectangleShape button(sf::Vector2f(320, 100));
+        button.setFillColor(sf::Color::Green);
+        button.setPosition(840, 550);
+
+        sf::Text playNowText("PLAY AGAIN", arialFont, 50);
+        playNowText.setPosition(850, 560);
+        playNowText.setFillColor(sf::Color::White);
+        // losing part
+        while (window.isOpen())
+        {
+            window.clear();
+            window.draw(lostText);
+            window.draw(button);
+            window.draw(playNowText);
+            window.display();
+            while (window.pollEvent(event))
+            {
+                if (event.type == sf::Event::MouseButtonPressed)
+                {
+                    if (event.mouseButton.button == sf::Mouse::Left)
+                    {
+                        sf::Vector2f mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+                        if (button.getGlobalBounds().contains(mousePos))
+                        {
+                            window.clear();
+                            startWindowGame();
+                        }
+                    }
+                }
+            }
+        }
+
         delete p;
         window.~RenderTarget();
         window.~RenderWindow();
@@ -927,7 +993,7 @@ int main()
 {
     // modeTerminal();
     GUI gui;
-    gui.start();
+    gui.startWindowGame();
 
     return 0;
 }
