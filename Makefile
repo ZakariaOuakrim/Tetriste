@@ -1,5 +1,5 @@
-SFML_INCLUDE = -I"C:\Users\Dell\Desktop\Project\SFML-2.6.1\include"
-SFML_LIB = -L"C:\Users\Dell\Desktop\Project\SFML-2.6.1\lib" -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+SFML_INCLUDE = -I"SFML-2.6.1\include"
+SFML_LIB = -L"SFML-2.6.1\lib" -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Wextra -O2
 TARGET = sfml-app
