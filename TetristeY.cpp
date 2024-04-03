@@ -5,6 +5,7 @@
 #include <SFML/Audio.hpp>
 #include <unistd.h> // For sleep function
 #include <SFML/Graphics.hpp>
+#include <fstream>
 #include "dataStructure/DoubleLinkedList/h_files/node.h"
 #include "dataStructure/Piece/piece.h"
 
@@ -25,7 +26,7 @@ public:
         taille = 0;
     }
 
-    void addqueue(piece *data)
+    void addqueue(piece data)
     {
         Node *newNode = new Node(data);
 
@@ -44,13 +45,8 @@ public:
         head->prev = tail;
         taille++;
     }
-    void init(){
-        head=nullptr;
-        tail=nullptr;
-        taille=0;
-    }
 
-    void addhead(piece *data)
+    void addhead(piece data)
     {
         Node *newNode = new Node(data);
 
@@ -82,22 +78,22 @@ public:
 
         while (temp != tail)
         {
-            cout << temp->data->color << " " << temp->data->shape << "     ";
+            cout << temp->data.color << " " << temp->data.shape << "     ";
             temp = temp->next;
         }
 
-        cout << temp->data->color << " " << temp->data->shape << endl;
+        cout << temp->data.color << " " << temp->data.shape << endl;
     }
-    void supprimer(piece *p)
+    void supprimer(piece p)
     {
-        if (head == tail && head->data == p)
+        if (head == tail && (head->data.color == p.color && head->data.shape == p.shape))
         {
             delete head;
             head = tail = nullptr;
             taille--;
             return;
         }
-        if (head->data == p)
+        if (head->data.color == p.color && head->data.shape == p.shape)
         {
             Node *e = head;
             head->next->prev = tail;
@@ -110,7 +106,7 @@ public:
         Node *c = head->next;
         while (c != head)
         {
-            if (c->data != p)
+            if ((c->data.color == p.color && c->data.shape == p.shape))
                 c = c->next;
             else
             {
@@ -133,24 +129,29 @@ public:
         }
 
         Node *courant = head;
-        piece temp = *head->data;
+        piece temp = head->data;
         while (courant->next != head)
         {
-            *courant->data = *courant->next->data;
+            courant->data = courant->next->data;
             courant = courant->next;
         }
-
-        *tail->data = temp;
+        tail->data = temp;
+    }
+    void init()
+    {
+        head = nullptr;
+        tail = nullptr;
+        taille = 0;
     }
 };
 
 class Cellule
 {
 public:
-    piece *valeur;
+    piece valeur;
     Cellule *suivant;
 
-    Cellule(piece *valeur)
+    Cellule(piece valeur)
     {
         this->valeur = valeur;
         suivant = nullptr;
@@ -171,19 +172,13 @@ public:
         dernier = nullptr;
         taille = 0;
     }
-    void init()
-    {
-        premier = nullptr;
-        dernier = nullptr;
-        taille = 0;
-    }
 
     bool estVide()
     {
         return premier == nullptr;
     }
 
-    void ajouterEnTete(piece *valeur)
+    void ajouterEnTete(piece valeur)
     {
         Cellule *nouvelleCellule = new Cellule(valeur);
 
@@ -200,7 +195,7 @@ public:
         taille++;
     }
 
-    void ajouterEnFin(piece *valeur)
+    void ajouterEnFin(piece valeur)
     {
         Cellule *nouvelleCellule = new Cellule(valeur);
 
@@ -222,11 +217,17 @@ public:
         Cellule *temp = premier;
         for (int i = 0; i < taille; i++)
         {
-            cout << temp->valeur->color << " " << temp->valeur->shape << "   ";
+            cout << temp->valeur.color << " " << temp->valeur.shape << "   ";
             temp = temp->suivant;
         }
 
         cout << endl;
+    }
+    void init()
+    {
+        premier = nullptr;
+        dernier = nullptr;
+        taille = 0;
     }
 };
 
@@ -250,10 +251,10 @@ public:
         return p;
     }
 
-    void inserer(char c, piece *p)
+    void inserer(char c, piece p)
     {
 
-        switch (p->color[0])
+        switch (p.color[0])
         {
         case 'b':
             if (c == 'g')
@@ -281,7 +282,7 @@ public:
             break;
         }
 
-        switch (p->shape[0])
+        switch (p.shape[0])
         {
         case 'l':
             if (c == 'g')
@@ -315,6 +316,34 @@ public:
             hand.ajouterEnTete(p);
     }
 
+    void corriger(CircularDoublyLinkedList a, int op)
+    {
+        Node *temp = a.head;
+        Cellule *c = hand.premier;
+        if (op == 1)
+            do
+            {
+                if (c->valeur.color[0] == temp->data.color[0])
+                {
+                    c->valeur.shape = temp->data.shape;
+                    temp = temp->next;
+                }
+                c = c->suivant;
+
+            } while (c != hand.premier);
+        if (op == 2)
+            do
+            {
+                if (c->valeur.shape[0] == temp->data.shape[0])
+                {
+                    c->valeur.color = temp->data.color;
+                    temp = temp->next;
+                }
+                c = c->suivant;
+
+            } while (c != hand.premier);
+    }
+
     void showhand()
     {
         hand.afficher();
@@ -326,15 +355,19 @@ public:
         {
         case 'b':
             bleu.shiftleft();
+            corriger(bleu, 1);
             break;
         case 'j':
             jaune.shiftleft();
+            corriger(jaune, 1);
             break;
         case 'r':
             rouge.shiftleft();
+            corriger(rouge, 1);
             break;
         case 'v':
             vert.shiftleft();
+            corriger(vert, 1);
             break;
         }
     }
@@ -345,22 +378,26 @@ public:
         {
         case 'l':
             losange.shiftleft();
+            corriger(losange, 2);
             break;
         case 'c':
             carre.shiftleft();
+            corriger(carre, 2);
             break;
         case 'r':
             rond.shiftleft();
+            corriger(rond, 2);
             break;
         case 't':
             triangle.shiftleft();
+            corriger(triangle, 2);
             break;
         }
     }
-    void supp(piece *p)
+    void supp(piece p)
     {
 
-        switch (p->color[0])
+        switch (p.color[0])
         {
         case 'b':
             bleu.supprimer(p);
@@ -379,7 +416,7 @@ public:
             break;
         }
 
-        switch (p->shape[0])
+        switch (p.shape[0])
         {
         case 'l':
 
@@ -410,7 +447,7 @@ public:
             pred = hand.dernier;
             while (t3 != hand.premier)
             {
-                if (((t1->valeur->color == t2->valeur->color) && (t1->valeur->color == t3->valeur->color)) || ((t1->valeur->shape == t2->valeur->shape) && (t1->valeur->shape == t3->valeur->shape)))
+                if (((t1->valeur.color == t2->valeur.color) && (t1->valeur.color == t3->valeur.color)) || ((t1->valeur.shape == t2->valeur.shape) && (t1->valeur.shape == t3->valeur.shape)))
                 {
                     pred->suivant = t3->suivant;
                     if (t1 == hand.premier)
@@ -432,7 +469,6 @@ public:
                 t2 = t1->suivant;
                 t3 = t2->suivant;
             }
-            return 0;
         }
         return 0;
     }
@@ -450,27 +486,23 @@ void modeTerminal()
     game g;
     int choix1;
     char choix2;
-    piece *p;
+
     while (gamestat)
     {
-        // system("cls");
-        p = new piece(g.nextcard());
-        cout << "Next piece: " << p->color << " " << p->shape << "                   "
-             << "Score  : " << g.score << endl;
-        cout << "\n";
-        cout << "-----------My Hand (liste principale)------------" << endl;
+        piece p = g.nextcard();
+        cout << "Next piece:" << p.color << " " << p.shape << "                   "
+             << "Score :" << g.score << endl;
+        cout << "My Hand:" << endl;
         g.showhand();
-        cout << "------------Liste Color---------------\n";
-        cout << "\033[31mrouge: \033[0m";
+        cout << "rouge:";
         g.rouge.display();
-        cout << "\033[34mbleu: \033[0m";
+        cout << "blue:";
         g.bleu.display();
-        cout << "\033[33mjaune: \033[0m";
+        cout << "jaune:";
         g.jaune.display();
-        cout << "\033[32mvert: \033[0m";
+        cout << "vert:";
         g.vert.display();
-        cout << "------------Liste Shape---------------\n";
-        cout << "losange:";
+        cout << "lausange:";
         g.losange.display();
         cout << "carre:";
         g.carre.display();
@@ -478,14 +510,12 @@ void modeTerminal()
         g.triangle.display();
         cout << "rond:";
         g.rond.display();
-        cout << "------------Commandes Game---------------\n";
         cout << "1 decaler couleur" << endl;
         cout << "2 decaler shapes" << endl;
         cout << "3 inserer en tete" << endl;
         cout << "4 inserer en queue" << endl;
         cout << "=>";
         choix1 = std::cin.get();
-        cout << endl;
 
         switch (choix1 - '0')
         {
@@ -495,7 +525,7 @@ void modeTerminal()
             cout << "j selon jaune" << endl;
             cout << "b selon bleu" << endl;
             cout << "=>";
-            cin >> choix2;
+            choix2 = std::cin.get();
             g.decalercouleur(choix2);
             break;
         case 2:
@@ -504,7 +534,7 @@ void modeTerminal()
             cout << "r selon rond" << endl;
             cout << "t selon triangle" << endl;
             cout << "=>";
-            cin >> choix2;
+            choix2 = std::cin.get();
             g.decalershape(choix2);
             break;
         case 3:
@@ -517,8 +547,8 @@ void modeTerminal()
         g.supprimer();
         gamestat = g.gameover();
     }
-    delete p;
 }
+
 
 class GUI
 {
@@ -535,7 +565,7 @@ private:
     game _game;
     int score;
 
-    piece *p;
+    piece p;
 
     sf::Shape *createShape(string shape)
     {
@@ -545,22 +575,22 @@ private:
         case 'l':
             newShape = new sf::RectangleShape(sf::Vector2f(80.f, 80.f));
             newShape->rotate(45); // newShape
-            newShape->setPosition(380.f, 30.f);
+            newShape->setPosition(405.f, 30.f);
             return newShape;
             break;
         case 'c': // carré
             newShape = new sf::RectangleShape(sf::Vector2f(80.f, 80.f));
-            newShape->setPosition(320.f, 30.f);
+            newShape->setPosition(345.f, 30.f);
             return newShape;
             break;
         case 'r': // circle
             newShape = new sf::CircleShape(50.f);
-            newShape->setPosition(320.f, 30.f);
+            newShape->setPosition(345.f, 30.f);
             return newShape;
             break;
         case 't': // triangle
             newShape = new sf::CircleShape(60, 3);
-            newShape->setPosition(320.f, 30.f);
+            newShape->setPosition(335.f, 30.f);
             return newShape;
             break;
         default:
@@ -672,10 +702,10 @@ private:
         for (int i = 0; i < _game.hand.taille; i++)
         {
             // create and draw process
-            _shape = createShape(_tmp->valeur->shape);
-            colorShape(_tmp->valeur->color, _shape);
+            _shape = createShape(_tmp->valeur.shape);
+            colorShape(_tmp->valeur.color, _shape);
             x += 150;
-            if (_tmp->valeur->shape[0] == 'l') // hna zid had condition 7it diamond shape can't fit correctly behind other shapes
+            if (_tmp->valeur.shape[0] == 'l') // hna zid had condition 7it diamond shape can't fit correctly behind other shapes
                 _shape->setPosition(x + 40, y);
             else
                 _shape->setPosition(x, y);
@@ -720,8 +750,11 @@ private:
         _game.losange.init();
     }
 
+    void maxScores(){
+
+    }
 public:
-    GUI() : window(sf::VideoMode(1920, 1080), "TETRISE")
+    GUI() : window(sf::VideoMode(1920, 1080), "TETRISTE")
     {
         srand(static_cast<unsigned>(time(0)));
         soundImport();
@@ -730,7 +763,7 @@ public:
         swapSound.setBuffer(bufferSwap);
         lostSound.setBuffer(bufferLost);
 
-        if (!scoreFont.loadFromFile("ressources/fonts/Arial.ttf"))
+        if (!scoreFont.loadFromFile("ressources/fonts/gang.ttf"))
         {
             std::cout << "Failed to load font!" << std::endl;
             return;
@@ -739,7 +772,7 @@ public:
         scoreText.setPosition(1500, 50);
         scoreText.setFillColor(sf::Color::White);
 
-        nextText = sf::Text("Next Element ", scoreFont, 50);
+        nextText = sf::Text(" Next Element:  ", scoreFont, 50);
         nextText.setPosition(0, 40);
         nextText.setFillColor(sf::Color::White);
 
@@ -751,7 +784,7 @@ public:
     void startWindowGame()
     {
         // Create the font
-        sf::Font font3d, arialFont;
+        sf::Font font3d, arialFont, pacificoFont;
         musicGame.setLoop(true);
         musicGame.play();
         if (!font3d.loadFromFile("ressources/fonts/gunplay.otf"))
@@ -767,51 +800,128 @@ public:
 
         // Create the button
         sf::RectangleShape button(sf::Vector2f(280, 100));
-        button.setFillColor(sf::Color::Green);
-        button.setPosition(840, 490);
+        button.setFillColor(sf::Color(60, 179, 113)); // Vert
+        button.setOutlineThickness(5);                // Épaisseur de la bordure
+        button.setOutlineColor(sf::Color::Black);     // Couleur de la bordure
+        button.setPosition(820, 490);
 
         // text Tertiste
-        sf::Text tetristeText("TETRIST", font3d, 150);
-        tetristeText.setPosition(660, 220);
+        sf::Text tetristeText("TETRISTE", font3d, 150);
+        tetristeText.setPosition(630, 280);
         tetristeText.setFillColor(sf::Color::Red);
 
-        // text playNow
+        // Text "PLAY NOW"
         sf::Text playNowText("PLAY NOW", arialFont, 50);
-        playNowText.setPosition(850, 500);
-        playNowText.setFillColor(sf::Color::White);
+        // Center the text within the button
+        sf::FloatRect textBounds = playNowText.getLocalBounds();
+        playNowText.setPosition(button.getPosition().x + (button.getSize().x - textBounds.width) / 2,
+                                button.getPosition().y + (button.getSize().y - textBounds.height) / 2 - textBounds.top);
+        playNowText.setFillColor(sf::Color::Yellow);
 
+        // Charger les textures pour les images
+        sf::Texture texture1, texture2, texture3, texture4, texture5, texture6, texture7, texture;
+        if (!texture1.loadFromFile("ressources/images/image1.png") ||
+            !texture2.loadFromFile("ressources/images/image2.png") ||
+            !texture3.loadFromFile("ressources/images/image3.png") ||
+            !texture4.loadFromFile("ressources/images/image4.png") ||
+            !texture5.loadFromFile("ressources/images/image5.png") ||
+            !texture6.loadFromFile("ressources/images/image6.png") ||
+            !texture7.loadFromFile("ressources/images/image7.png") ||
+            !texture.loadFromFile("ressources/images/image.png"))
+        {
+            // Gérer l'erreur si une texture ne peut pas être chargée
+            return;
+        }
+
+        // Créer les sprites pour les images
+        sf::Sprite sprite1(texture1);
+        sf::Sprite sprite2(texture2);
+        sf::Sprite sprite3(texture3);
+        sf::Sprite sprite4(texture4);
+        sf::Sprite sprite5(texture5);
+        sf::Sprite sprite6(texture6);
+        sf::Sprite sprite7(texture7);
+        sf::Sprite sprite(texture);
+
+        // Déterminer les positions pour chaque coin de l'écran
+        float screenWidth = window.getSize().x;
+        float screenHeight = window.getSize().y;
+        float imageWidth = sprite1.getLocalBounds().width;
+        float imageHeight = sprite1.getLocalBounds().height;
+
+        // Coin supérieur gauche
+        sprite1.setPosition(0, 0);
+
+        // coin centre haut
+        sprite.setPosition(800, 0);
+        // Coin gauche milieu
+
+        sprite6.setPosition(0, 400);
+
+        // Coin supérieur droit
+        sprite2.setPosition(screenWidth - imageWidth + 770, 0);
+
+        // Coin droit milieu
+        sprite5.setPosition(screenWidth - imageWidth + 770, 400);
+
+        // Coin centre bas coupe
+
+        sprite7.setPosition(760, 600);
+
+        // Coin inférieur gauche
+        sprite3.setPosition(0, screenHeight - imageHeight + 400);
+
+        // Coin inférieur droit
+        sprite4.setPosition(screenWidth - imageWidth + 760, screenHeight - imageHeight + 400);
+
+        // Ajuster la taille de chaque sprite
+        float scaleFactor = 0.2f; // Changer cette valeur pour ajuster la taille des images
+        float scaleFactor2 = 0.5f;
+        sprite1.setScale(scaleFactor, scaleFactor);
+        sprite2.setScale(scaleFactor, scaleFactor);
+        sprite3.setScale(scaleFactor, scaleFactor);
+        sprite4.setScale(scaleFactor, scaleFactor);
+        sprite5.setScale(scaleFactor, scaleFactor);
+        sprite6.setScale(scaleFactor, scaleFactor);
+        sprite7.setScale(scaleFactor2, scaleFactor2);
+        sprite.setScale(scaleFactor, scaleFactor);
         // Main loop
         while (window.isOpen())
         {
-            // Event handling
+            window.clear(sf::Color::White);
+
             sf::Event event;
             while (window.pollEvent(event))
             {
                 if (event.type == sf::Event::Closed)
-                {
                     window.close();
-                }
 
-                // Check if the button is clicked
-                if (event.type == sf::Event::MouseButtonPressed)
+                // Gérer les événements de la souris pour le bouton
+                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
                 {
-                    if (event.mouseButton.button == sf::Mouse::Left)
+                    sf::Vector2f mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+                    if (button.getGlobalBounds().contains(mousePos))
                     {
-                        sf::Vector2f mousePos = window.mapPixelToCoords(sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
-                        if (button.getGlobalBounds().contains(mousePos))
-                        {
-                            std::cout << "Start Game button clicked!" << std::endl;
-                            start();
-                        }
+                        std::cout << "Start Game button clicked!" << std::endl;
+                        start();
                     }
                 }
             }
 
-            // Draw the button
+            // Dessiner le bouton et le texte
             window.draw(tetristeText);
             window.draw(button);
             window.draw(playNowText);
 
+            // Dessiner les sprites des images
+            window.draw(sprite1);
+            window.draw(sprite2);
+            window.draw(sprite3);
+            window.draw(sprite4);
+            window.draw(sprite5);
+            window.draw(sprite6);
+            window.draw(sprite7);
+            window.draw(sprite);
             // Display the window
             window.display();
         }
@@ -830,14 +940,15 @@ public:
         initAllElementsOfTheGame();
         scoreText.setString("Score: 0"); // hna we need to always set the text so if the game is played again it can be updated
 
-        p = new piece(_game.nextcard());
-        shape = createShape(p->shape);
-        colorShape(p->color, shape); // 3tih color
+        p = _game.nextcard();
+        shape = createShape(p.shape);
+        colorShape(p.color, shape); // 3tih color
         // startWindowGame();           // home page
         window.clear();
         musicGame.setVolume(10.f);
         while (window.isOpen())
         {
+
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) // add left
             {
                 usleep(200000); // 0.2 second
@@ -852,8 +963,8 @@ public:
                     scoreText.setString("Score: " + to_string(score));
                 }
 
-                window.clear();                  // kanms7o shape li tal3 lina lfu9 3la lisr
-                p = new piece(_game.nextcard()); // génériw piece jdida
+                window.clear();       // kanms7o shape li tal3 lina lfu9 3la lisr
+                p = _game.nextcard(); // génériw piece jdida
                 // p = tab[i];
                 // cout << "i " << i << endl;
                 // i++;
@@ -863,9 +974,10 @@ public:
                 //     initTab();
                 // }
 
-                shape = createShape(p->shape);
-                colorShape(p->color, shape); // 3tih color
+                shape = createShape(p.shape);
+                colorShape(p.color, shape); // 3tih color
             }
+
             else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
             {                   // add right
                 usleep(200000); // 0.2 second
@@ -879,7 +991,7 @@ public:
                     score += 10;
                     scoreText.setString("Score: " + to_string(score));
                 }
-                p = new piece(_game.nextcard()); // génériw piece jdida
+                p = _game.nextcard(); // génériw piece jdida
                 // p = tab[i];
                 // cout << "i " << i << endl;
                 // i++;
@@ -891,8 +1003,8 @@ public:
 
                 window.clear(); // kanms7o shape li tal3 lina lfu9 3la lisr
 
-                shape = createShape(p->shape);
-                colorShape(p->color, shape); // 3tih color
+                shape = createShape(p.shape);
+                colorShape(p.color, shape); // 3tih color
             }
             didWeChangeColorOrShape = handleShortcuts();
             if (didWeChangeColorOrShape == 1)
@@ -982,12 +1094,12 @@ public:
             }
         }
 
-        delete p;
         window.~RenderTarget();
         window.~RenderWindow();
         window.~Window();
     }
 };
+
 
 int main()
 {

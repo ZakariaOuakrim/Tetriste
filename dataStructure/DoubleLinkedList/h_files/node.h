@@ -5,10 +5,10 @@
 class Node
 {
 public:
-    piece *data;
+    piece data;
     Node *prev;
     Node *next;
 
-    Node(piece *data);
+    Node(piece data);
 };
 #endif
