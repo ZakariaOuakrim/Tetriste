@@ -5,7 +5,7 @@ CXXFLAGS = -std=c++11 -Wall -Wextra -O2
 TARGET = sfml-app
 
 SRC = TetristeY.cpp
-OBJ = $(SRC:.cpp=.o) dataStructure/DoubleLinkedList/cpp_files/node.o
+OBJ = $(SRC:.cpp=.o) dataStructure/DoubleLinkedList/cpp_files/node.o dataStructure/DoubleLinkedList/cpp_files/CircularDoublyLinkedList.o dataStructure/SimpleLinkedList/cpp_files/Cellule.o dataStructure/SimpleLinkedList/cpp_files/ListeCirculaire.o Game/cpp_files/game.o Game/cpp_files/TerminalMode.o Game/cpp_files/Gui.o 
 
 .PHONY: all clean
 
@@ -17,7 +17,6 @@ $(TARGET): $(OBJ)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(SFML_INCLUDE)
 
-# Rule to compile circularDoubledLinkedList.cpp into circularDoubledLinkedList.o
 
 startGame: $(TARGET)
 	./$(TARGET)
