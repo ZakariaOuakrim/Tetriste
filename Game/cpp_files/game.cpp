@@ -1,5 +1,6 @@
 #include "../h_files/game.h"
 #include "string"
+
 using namespace std;
 
 
@@ -11,16 +12,16 @@ game::game() {
 // Generate next card
 piece game::nextcard() {
     piece p;
-    string couleurs[] = {"bleu", "rouge", "vert", "jaune"};
+    char couleurs[] = {'b', 'r', 'v', 'j'};
     p.color = couleurs[std::rand() % 4];
-    string shapes[] = {"losange", "rond", "carre", "triangle"};
+    char shapes[] = {'l', 'r', 'c', 't'};
     p.shape = shapes[std::rand() % 4];
     return p;
 }
 
 // Insert a piece into the appropriate circular doubly linked list
 void game::inserer(char c, piece p) {
-    switch (p.color[0]) {
+    switch (p.color) {
         case 'b':
             if (c == 'g')
                 bleu.addhead(p);
@@ -47,7 +48,7 @@ void game::inserer(char c, piece p) {
             break;
     }
 
-    switch (p.shape[0]) {
+    switch (p.shape) {
         case 'l':
             if (c == 'g')
                 losange.addhead(p);
@@ -86,7 +87,7 @@ void game::corriger(CircularDoublyLinkedList a, int op) {
     Cellule *c = hand.premier;
     if (op == 1) {
         do {
-            if (c->valeur.color[0] == temp->data.color[0]) {
+            if (c->valeur.color == temp->data.color) {
                 c->valeur.shape = temp->data.shape;
                 temp = temp->next;
             }
@@ -95,7 +96,7 @@ void game::corriger(CircularDoublyLinkedList a, int op) {
     }
     if (op == 2) {
         do {
-            if (c->valeur.shape[0] == temp->data.shape[0]) {
+            if (c->valeur.shape == temp->data.shape) {
                 c->valeur.color = temp->data.color;
                 temp = temp->next;
             }
@@ -155,7 +156,7 @@ void game::decalershape(char s) {
 
 // Remove a piece from the circular doubly linked lists
 void game::supp(piece p) {
-    switch (p.color[0]) {
+    switch (p.color) {
         case 'b':
             bleu.supprimer(p);
             break;
@@ -170,7 +171,7 @@ void game::supp(piece p) {
             break;
     }
 
-    switch (p.shape[0]) {
+    switch (p.shape) {
         case 'l':
             losange.supprimer(p);
             break;
@@ -189,36 +190,54 @@ void game::supp(piece p) {
 // Remove a sequence of three identical pieces from the hand
 int game::supprimer() {
     if (hand.taille >= 3) {
-        Cellule *t1, *t2, *t3, *pred;
-        t1 = hand.premier;
-        t2 = t1->suivant;
-        t3 = t2->suivant;
-        pred = hand.dernier;
+        Cellule *t1 = hand.premier;
+        Cellule *t2 = t1->suivant;
+        Cellule *t3 = t2->suivant;
+        Cellule *pred = hand.dernier;
+        
+        // Null pointer checks
+        if (t1 == nullptr || t2 == nullptr || t3 == nullptr) {
+            return 0; // Not enough elements in the list
+        }
+        
         while (t3 != hand.premier) {
-            if (((t1->valeur.color == t2->valeur.color) && (t1->valeur.color == t3->valeur.color)) || ((t1->valeur.shape == t2->valeur.shape) && (t1->valeur.shape == t3->valeur.shape))) {
+            if (((t1->valeur.color == t2->valeur.color) && (t1->valeur.color == t3->valeur.color)) || 
+                ((t1->valeur.shape == t2->valeur.shape) && (t1->valeur.shape == t3->valeur.shape))) {
+                
                 pred->suivant = t3->suivant;
+                
+                // Update hand.premier and hand.dernier if necessary
                 if (t1 == hand.premier)
                     hand.premier = t3->suivant;
                 if (t3 == hand.dernier)
                     hand.dernier = pred;
+                
+                // Memory deallocation
                 supp(t1->valeur);
                 supp(t2->valeur);
                 supp(t3->valeur);
                 delete t1;
                 delete t2;
                 delete t3;
+                
                 hand.taille -= 3;
                 score += 5;
-                return 1;
+                return 1; // Match found and removed
             }
             pred = t1;
             t1 = t1->suivant;
             t2 = t1->suivant;
             t3 = t2->suivant;
+            
+            // Null pointer checks inside the loop
+            if (t1 == nullptr || t2 == nullptr || t3 == nullptr) {
+                return 0; // Not enough elements in the list
+            }
         }
     }
-    return 0;
+    return 0; // No match found
 }
+
 
 // Check if the game is over
 bool game::gameover() {

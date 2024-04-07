@@ -1,7 +1,8 @@
 #include "../h_files/Gui.h"
-#include <unistd.h> // For usleep function
+#include <unistd.h>
 #include <string>
 #include <fstream>
+#include <queue>
 
 using namespace std;
 
@@ -30,6 +31,12 @@ GUI::GUI() : window(sf::VideoMode(1920, 1080), "TETRISTE")
     lostText = sf::Text("You Lost ", scoreFont, 100);
     lostText.setPosition(800, 400);
     lostText.setFillColor(sf::Color::Red);
+    // set the first 5 elements that the user could see
+    for (int i = 0; i < 3; i++)
+    {
+        p = _game.nextcard();
+        nextElements.push(p);
+    }
 }
 
 void GUI::startWindowGame()
@@ -181,10 +188,30 @@ void GUI::startWindowGame()
     window.~Window();
 }
 
+void GUI::displayPieceInTheQueue()
+{
+
+    queue<piece> file = nextElements;
+    int x = 500, y = 50;
+    sf::Shape *tmp;
+    for (int i = 0; i < 3; i++)
+    { // display in the console elements
+        x += 150;
+        tmp = createShape(file.front().shape);
+        colorShape(file.front().color, tmp);
+        tmp->setPosition(x, y);
+        if (file.front().shape == 'l')
+        { // ila kant diamond khassna n3tiwha spacing ktar
+            tmp->setPosition(x + 50, y);
+        }
+        window.draw(*tmp);
+        file.pop(); // remove
+    }
+}
+
 void GUI::start()
 {
     int didWeChangeColorOrShape;
-    initTab(); // init the tab
     score = 0;
     // set all elements to nullptr so if we try to play again we wont have a prb
     initAllElementsOfTheGame();
@@ -198,7 +225,7 @@ void GUI::start()
     musicGame.setVolume(10.f);
     while (window.isOpen())
     {
-
+        // draw waiting elements
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) // add left
         {
             usleep(200000); // 0.2 second
@@ -209,20 +236,20 @@ void GUI::start()
             if (_game.supprimer())
             { // check if we have 3 elemnts next to each other
                 destroySound.play();
-                score += 10;
+                if (score >= 30 && score <= 100)
+                    score += 20;
+                else
+                {
+                    score += 10;
+                }
+
                 scoreText.setString("Score: " + to_string(score));
             }
 
-            window.clear();       // kanms7o shape li tal3 lina lfu9 3la lisr
-            p = _game.nextcard(); // génériw piece jdida
-            // p = tab[i];
-            // cout << "i " << i << endl;
-            // i++;
-            // if (i == 3)
-            // {
-            //     i = 0;
-            //     initTab();
-            // }
+            window.clear();           // kanms7o shape li tal3 lina lfu9 3la lisr
+            p = nextElements.front(); // génériw piece jdida
+            nextElements.pop();
+            nextElements.push(_game.nextcard());
 
             shape = createShape(p.shape);
             colorShape(p.color, shape); // 3tih color
@@ -238,18 +265,17 @@ void GUI::start()
             if (_game.supprimer())
             { // check if we have 3 elemnts next to each other
                 destroySound.play();
-                score += 10;
+                if (score >= 30 && score <= 100)
+                    score += 20;
+                else
+                {
+                    score += 10;
+                }
                 scoreText.setString("Score: " + to_string(score));
             }
-            p = _game.nextcard(); // génériw piece jdida
-            // p = tab[i];
-            // cout << "i " << i << endl;
-            // i++;
-            // if (i == 3)
-            // {
-            //     i = 0;
-            //     initTab();
-            // }
+            p = nextElements.front(); // génériw piece jdida
+            nextElements.pop();
+            nextElements.push(_game.nextcard());
 
             window.clear(); // kanms7o shape li tal3 lina lfu9 3la lisr
 
@@ -262,7 +288,12 @@ void GUI::start()
             if (_game.supprimer())
             { // checki ila 3ndna 3 7da b3dyathum
                 destroySound.play();
-                score += 10;
+                if (score >= 30 && score <= 100)
+                    score += 20;
+                else
+                {
+                    score += 10;
+                }
                 scoreText.setString("Score: " + to_string(score));
             }
             window.clear();
@@ -273,7 +304,12 @@ void GUI::start()
             if (_game.supprimer())
             { // checki ila 3ndna 3 7da b3dyathum
                 destroySound.play();
-                score += 10;
+                if (score >= 30 && score <= 100)
+                    score += 20;
+                else
+                {
+                    score += 10;
+                }
             }
             window.clear();
             swapSound.play();
@@ -283,7 +319,6 @@ void GUI::start()
         {
             if (event.type == sf::Event::Closed)
             {
-                cout << "here" << endl;
                 window.close();
                 musicGame.stop();
                 window.~RenderTarget();
@@ -302,8 +337,10 @@ void GUI::start()
         window.draw(*shape);
         window.draw(scoreText);
         window.draw(nextText);
+        displayPieceInTheQueue();
         window.display();
     } // end loop of the game
+
     topScores(score);
 
     musicGame.pause();
@@ -350,11 +387,11 @@ void GUI::start()
     window.~Window();
 }
 
-sf::Shape *GUI::createShape(std::string shape)
+sf::Shape *GUI::createShape(char shape)
 {
 
     sf::Shape *newShape;
-    switch (shape[0])
+    switch (shape)
     {
     case 'l':
         newShape = new sf::RectangleShape(sf::Vector2f(80.f, 80.f));
@@ -382,9 +419,9 @@ sf::Shape *GUI::createShape(std::string shape)
     }
 }
 
-void GUI::colorShape(std::string color, sf::Shape *shape)
+void GUI::colorShape(char color, sf::Shape *shape)
 {
-    switch (color[0])
+    switch (color)
     {
     case 'r':
         shape->setFillColor(sf::Color::Red);
@@ -490,7 +527,7 @@ void GUI::drawAllShapesThatAreInHand()
         _shape = createShape(_tmp->valeur.shape);
         colorShape(_tmp->valeur.color, _shape);
         x += 150;
-        if (_tmp->valeur.shape[0] == 'l') // hna zid had condition 7it diamond shape can't fit correctly behind other shapes
+        if (_tmp->valeur.shape == 'l') // hna zid had condition 7it diamond shape can't fit correctly behind other shapes
             _shape->setPosition(x + 40, y);
         else
             _shape->setPosition(x, y);
@@ -498,27 +535,6 @@ void GUI::drawAllShapesThatAreInHand()
         window.display();
 
         _tmp = _tmp->suivant;
-    }
-}
-
-void GUI::initTab()
-{
-    tab[0] = new piece(_game.nextcard());
-    tab[1] = new piece(_game.nextcard());
-    tab[2] = new piece(_game.nextcard());
-}
-
-void GUI::drawWaitingElements()
-{
-    sf::Shape *_shape;
-    int x = 300;
-    for (int i = 0; i < 3; i++)
-    {
-        _shape = createShape(tab[i]->shape);
-        colorShape(tab[i]->color, _shape);
-        x += 150;
-        _shape->setPosition(x, 30);
-        window.draw(*_shape);
     }
 }
 

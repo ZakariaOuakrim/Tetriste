@@ -4,8 +4,11 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include "game.h"
+#include <queue>
+using namespace std;
 
-class GUI {
+class GUI
+{
 private:
     sf::RenderWindow window;
     sf::Music musicGame;
@@ -15,22 +18,20 @@ private:
     sf::Shape *shape;
     sf::Font scoreFont;
     sf::Text scoreText, nextText, lostText;
-    piece *tab[3];
     game _game;
     int score;
+    queue<piece> nextElements; //this one is used for seeing the next elements that the user will have in hand 
 
     piece p;
 
-    sf::Shape *createShape(std::string shape);
-    void colorShape(std::string color, sf::Shape *shape);
+    sf::Shape *createShape(char shape);
+    void colorShape(char color, sf::Shape *shape);
     void soundImport();
     int handleShortcuts();
     void drawAllShapesThatAreInHand();
-    void initTab();
-    void drawWaitingElements();
     void initAllElementsOfTheGame();
     void topScores(int score);
-
+    void displayPieceInTheQueue();
 public:
     GUI();
     void startWindowGame();
