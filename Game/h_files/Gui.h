@@ -17,7 +17,7 @@ private:
     sf::Event event;
     sf::Shape *shape;
     sf::Font scoreFont;
-    sf::Text scoreText, nextText, lostText;
+    sf::Text scoreText, nextText, lostText, doubleText;
     game _game;
     int score;
     queue<piece> nextElements; //this one is used for seeing the next elements that the user will have in hand 

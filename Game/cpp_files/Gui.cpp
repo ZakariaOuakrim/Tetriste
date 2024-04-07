@@ -31,6 +31,11 @@ GUI::GUI() : window(sf::VideoMode(1920, 1080), "TETRISTE")
     lostText = sf::Text("You Lost ", scoreFont, 100);
     lostText.setPosition(800, 400);
     lostText.setFillColor(sf::Color::Red);
+
+    doubleText= sf::Text("Double Time Score", scoreFont, 40);
+    doubleText.setPosition(1450, 20);
+    doubleText.setFillColor(sf::Color::Red);
+
     // set the first 5 elements that the user could see
     for (int i = 0; i < 3; i++)
     {
@@ -334,6 +339,8 @@ void GUI::start()
             break;
         }
         // testing
+        if(score>=30 && score <=100)
+            window.draw(doubleText);
         window.draw(*shape);
         window.draw(scoreText);
         window.draw(nextText);
