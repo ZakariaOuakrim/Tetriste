@@ -3,6 +3,8 @@
 #include <string>
 #include <fstream>
 #include <queue>
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
@@ -32,9 +34,13 @@ GUI::GUI() : window(sf::VideoMode(1920, 1080), "TETRISTE")
     lostText.setPosition(800, 400);
     lostText.setFillColor(sf::Color::Red);
 
-    doubleText= sf::Text("Double Time Score", scoreFont, 40);
+    doubleText = sf::Text("Double Time Score", scoreFont, 40);
     doubleText.setPosition(1450, 20);
     doubleText.setFillColor(sf::Color::Red);
+
+    countDownText = sf::Text("Time: 60", scoreFont, 100);
+    countDownText.setPosition(1500, 180);
+    countDownText.setFillColor(sf::Color::Yellow);
 
     // set the first 5 elements that the user could see
     for (int i = 0; i < 3; i++)
@@ -214,9 +220,25 @@ void GUI::displayPieceInTheQueue()
     }
 }
 
+bool GUI::countDown(int seconds)
+{
+    auto startTime = std::chrono::steady_clock::now();
+    auto endTime = startTime + std::chrono::seconds(seconds);
+
+    while (std::chrono::steady_clock::now() < endTime)
+    {
+        auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - startTime).count();
+        currentTime = static_cast<int>(elapsedTime); // Update the elapsed time in seconds
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    timeUp = true;
+    return timeUp; // Indicate that countdown has finished
+}
 void GUI::start()
 {
-    int didWeChangeColorOrShape;
+    std::thread timerThread(&GUI::countDown, this,60); // Start countdown timer in a separate thread
+    timerThread.detach();                               // Detach the thread so it runs independently
+    bool doesTheUserNeedHelp = false;
     score = 0;
     // set all elements to nullptr so if we try to play again we wont have a prb
     initAllElementsOfTheGame();
@@ -228,12 +250,15 @@ void GUI::start()
     // startWindowGame();           // home page
     window.clear();
     musicGame.setVolume(10.f);
-    while (window.isOpen())
+
+    while (window.isOpen()) // loop of the game
     {
-        // draw waiting elements
+        //-------------------------------------left insertion--------------------
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) // add left
         {
-            usleep(200000); // 0.2 second
+            usleep(200000);              // 0.2 second
+            doesTheUserNeedHelp = false; // need to be set to false so the user wont see the next elements
+
             // initialiser shape
             _game.inserer('g', p);
             insertSound.play();
@@ -247,7 +272,6 @@ void GUI::start()
                 {
                     score += 10;
                 }
-
                 scoreText.setString("Score: " + to_string(score));
             }
 
@@ -260,9 +284,12 @@ void GUI::start()
             colorShape(p.color, shape); // 3tih color
         }
 
+        //-------------------------------------right insertion--------------------
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-        {                   // add right
-            usleep(200000); // 0.2 second
+        {                                // add right
+            usleep(200000);              // 0.2 second
+            doesTheUserNeedHelp = false; // need to be set to false so the user wont see the next elements
+
             // initialiser shape
             _game.inserer('d', p);
             insertSound.play();
@@ -287,9 +314,18 @@ void GUI::start()
             shape = createShape(p.shape);
             colorShape(p.color, shape); // 3tih color
         }
-        didWeChangeColorOrShape = handleShortcuts();
-        if (didWeChangeColorOrShape == 1)
+
+        //-------------------------------------Needing help-------------------
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::H))
         {
+            doesTheUserNeedHelp = true;
+        }
+
+        //-------------------------------------switching elements--------------------
+        if (handleShortcuts() != -1) // did we switch if yes check if we have any 3 elemnts next to each other and play a sound effect
+        {
+            doesTheUserNeedHelp = false; // need to be set to false so the user wont see the next elements
+
             if (_game.supprimer())
             { // checki ila 3ndna 3 7da b3dyathum
                 destroySound.play();
@@ -300,21 +336,6 @@ void GUI::start()
                     score += 10;
                 }
                 scoreText.setString("Score: " + to_string(score));
-            }
-            window.clear();
-            swapSound.play();
-        }
-        else if (didWeChangeColorOrShape == 0)
-        {
-            if (_game.supprimer())
-            { // checki ila 3ndna 3 7da b3dyathum
-                destroySound.play();
-                if (score >= 30 && score <= 100)
-                    score += 20;
-                else
-                {
-                    score += 10;
-                }
             }
             window.clear();
             swapSound.play();
@@ -332,21 +353,28 @@ void GUI::start()
             }
         }
         drawAllShapesThatAreInHand();
-        // drawWaitingElements();
-        if (_game.hand.taille == 13)
+
+        if (_game.hand.taille == 13 || timeUp) // check if the list has more than 13 if yes stop game
         {
             lostSound.play();
             break;
         }
-        // testing
-        if(score>=30 && score <=100)
+        //window.clear();
+        // countDownText.setString("Time: " + to_string(currentTime));
+
+        // drawing elements
+        if (score >= 30 && score <= 100) // check if we are in the double time or not
             window.draw(doubleText);
         window.draw(*shape);
         window.draw(scoreText);
         window.draw(nextText);
-        displayPieceInTheQueue();
+        window.draw(countDownText);
+        if (doesTheUserNeedHelp) // ila bgha l'user help then show him the next elements
+            displayPieceInTheQueue();
+
         window.display();
-    } // end loop of the game
+    }
+    // ######################## the end of loop of the game ##############################
 
     topScores(score);
 
@@ -459,7 +487,7 @@ void GUI::soundImport()
         return;
 }
 
-int GUI::handleShortcuts()
+int GUI::handleShortcuts() // had function hiya li katchecki wach bhgiti dir switch
 {
     sf::Event event;
     if (window.waitEvent(event))
@@ -556,6 +584,7 @@ void GUI::initAllElementsOfTheGame()
     _game.carre.init();
     _game.rond.init();
     _game.losange.init();
+    timeUp = false;
 }
 
 void GUI::topScores(int score)
