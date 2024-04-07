@@ -360,7 +360,7 @@ void GUI::start()
             break;
         }
         //window.clear();
-        // countDownText.setString("Time: " + to_string(currentTime));
+        countDownText.setString("Time: " + to_string(currentTime));
 
         // drawing elements
         if (score >= 30 && score <= 100) // check if we are in the double time or not
